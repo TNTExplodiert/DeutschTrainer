@@ -16,6 +16,7 @@ const elTouch = document.getElementById("touch-controls");
 const elBack = document.getElementById("btn-back");
 const overlays = {
   consent: document.getElementById("overlay-consent"),
+  device: document.getElementById("overlay-device"),
   mode: document.getElementById("overlay-mode"),
   menu: document.getElementById("overlay-menu"),
   map: document.getElementById("overlay-map"),
@@ -44,7 +45,8 @@ QUESTIONS.forEach((q) => { QUESTION_BY_ID[q.id] = q; });
 function questionsByTopic(t) { return QUESTIONS.filter((q) => q.topic === t); }
 
 // ---- App-Zustand ----
-let appState = "consent";           // consent | mode | menu | map | playing | levelcomplete
+let appState = "consent";           // consent | device | mode | menu | map | playing | levelcomplete
+let deviceClass = "tablet";         // pc | tablet | phone
 let gameMode = "obby";              // obby | dash  (Cube Dash = Geometry-Dash-Stil)
 let difficulty = "medium";
 let profile = Storage.defaultProfile();
@@ -77,8 +79,25 @@ const player = {
 function showState(name) {
   appState = name;
   for (const key in overlays) overlays[key].classList.toggle("hidden", key !== name);
-  elTouch.classList.toggle("hidden", !(isTouch && name === "playing"));
+  // Touch-Steuerung nur im Spiel und nicht am PC
+  elTouch.classList.toggle("hidden", !(deviceClass !== "pc" && name === "playing"));
   elBack.classList.toggle("hidden", name !== "playing");
+}
+
+// Standard-Gerät anhand des aktuellen Geräts vorschlagen
+function detectDevice() {
+  if (!isTouch) return "pc";
+  const minDim = Math.min(window.screen ? window.screen.width : 9999,
+                          window.screen ? window.screen.height : 9999);
+  return minDim >= 700 ? "tablet" : "phone";
+}
+function applyDevice() {
+  document.body.classList.remove("device-pc", "device-tablet", "device-phone");
+  document.body.classList.add("device-" + deviceClass);
+  document.querySelectorAll(".dev-btn").forEach((b) =>
+    b.classList.toggle("selected", b.dataset.device === deviceClass));
+  const badge = document.getElementById("mode-dev");
+  if (badge) badge.textContent = { pc: "💻 PC", tablet: "📲 Tablet", phone: "📱 Handy" }[deviceClass] || "";
 }
 
 function applyDifficulty(d) {
@@ -747,7 +766,7 @@ function selectDifficultyUI() {
     b.classList.toggle("selected", b.dataset.diff === difficulty));
 }
 function selectModeUI() {
-  document.querySelectorAll(".mode-btn").forEach((b) =>
+  document.querySelectorAll(".mode-btn[data-mode]").forEach((b) =>
     b.classList.toggle("selected", b.dataset.mode === gameMode));
   const badge = document.getElementById("menu-mode");
   if (badge) badge.textContent = gameMode === "dash" ? "🔺 Cube Dash" : "🧗 Obby";
@@ -829,21 +848,33 @@ canvas.addEventListener("touchcancel", endCanvasTouch, { passive: false });
 function syncFromProfile() {
   difficulty = profile.difficulty || "medium";
   gameMode = profile.gameMode || "obby";
+  deviceClass = profile.device || detectDevice();
+  applyDevice();
   selectDifficultyUI(); selectModeUI(); updateConsentStatus();
 }
 document.getElementById("consent-accept").onclick = () => {
   Storage.grantConsent();
   profile = Storage.loadProfile();
   syncFromProfile();
-  showState("mode");
+  showState("device");
 };
 document.getElementById("consent-decline").onclick = () => {
   Storage.declineConsent();
   profile = Storage.defaultProfile();
   syncFromProfile();
-  showState("mode");
+  showState("device");
 };
-document.querySelectorAll(".mode-btn").forEach((b) => {
+document.querySelectorAll(".dev-btn").forEach((b) => {
+  b.onclick = () => {
+    deviceClass = b.dataset.device;
+    profile.device = deviceClass;
+    Storage.saveProfile(profile);
+    applyDevice();
+    showState("mode");
+  };
+});
+document.getElementById("mode-back").onclick = () => showState("device");
+document.querySelectorAll(".mode-btn:not(.dev-btn)").forEach((b) => {
   b.onclick = () => {
     gameMode = b.dataset.mode;
     profile.gameMode = gameMode;
@@ -877,9 +908,11 @@ function init() {
   if (Storage.consentAnswered()) {
     profile = Storage.loadProfile();
     syncFromProfile();
-    showState("mode");
+    showState("device");
   } else {
     profile = Storage.defaultProfile();
+    deviceClass = detectDevice();
+    applyDevice();
     showState("consent");
   }
   loop();

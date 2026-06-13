@@ -197,6 +197,13 @@ canvas {
   .tbtn { width: 78px; height: 78px; font-size: 28px; }
 }
 
+/* Geräteabhängige Anpassungen */
+body.device-pc #touch-controls { display: none !important; }   /* PC: keine Touch-Knöpfe */
+body.device-phone .tbtn { width: 82px; height: 82px; font-size: 30px; }
+body.device-phone .tbtn.jump { font-size: 20px; }
+/* Rotate-Hinweis nur auf Handy/Tablet relevant, nicht am PC */
+body.device-pc #rotate-hint { display: none !important; }
+
 /* Querformat-Hinweis (nur im Hochformat auf kleinen Geräten) */
 #rotate-hint { display: none; }
 @media (orientation: portrait) and (max-width: 900px) {

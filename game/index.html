@@ -46,10 +46,39 @@
       </div>
     </div>
 
+    <!-- Geräteauswahl -->
+    <div id="overlay-device" class="overlay hidden">
+      <div class="panel">
+        <h1>🖥️ Auf welchem Gerät spielst du?</h1>
+        <p>So passt sich die Steuerung automatisch an.</p>
+        <div class="mode-row">
+          <button class="mode-btn dev-btn" data-device="pc">
+            <span class="mode-ic">💻</span>
+            <span class="mode-name">PC / Laptop</span>
+            <span class="mode-desc">Steuerung mit der Tastatur</span>
+          </button>
+          <button class="mode-btn dev-btn" data-device="tablet">
+            <span class="mode-ic">📲</span>
+            <span class="mode-name">Tablet</span>
+            <span class="mode-desc">Touch-Knöpfe, Querformat</span>
+          </button>
+          <button class="mode-btn dev-btn" data-device="phone">
+            <span class="mode-ic">📱</span>
+            <span class="mode-name">Handy</span>
+            <span class="mode-desc">Große Touch-Knöpfe, quer halten</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Spielmodus wählen -->
     <div id="overlay-mode" class="overlay hidden">
       <div class="panel">
-        <h1>🎮 Spielmodus wählen</h1>
+        <div class="map-head">
+          <button id="mode-back" class="small-btn">↩ Gerät</button>
+          <h1>🎮 Spielmodus</h1>
+          <span id="mode-dev" class="badge"></span>
+        </div>
         <p>Wie möchtest du üben? Der Lernstoff ist in beiden Modi gleich.</p>
         <div class="mode-row">
           <button class="mode-btn" data-mode="obby">
