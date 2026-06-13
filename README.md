@@ -37,6 +37,10 @@ Roblox-Stil** (Idee #5 aus den Spielideen):
 - 🧠 **Lernprofil**: merkt sich Problem-Themen → **Übungs-Mix** wiederholt diese gezielt
 - 🍪 **Fortschritt wird in Cookies gespeichert** (mit Zustimmungs-Banner)
 
+**Themen (passend zum echten Schulstoff / euren Arbeitsblättern):**
+*Rechtschreibung:* das/dass · Groß & klein · Nominalisierung · s·ss·ß · Getrennt & zusammen · Kommasetzung.
+*Grammatik:* Wortarten · Pronomen · Satzglieder & Fälle · Adverbiale · Attribute · Satzreihe/-gefüge · indirekte Rede (Konjunktiv) · Zeitformen · Aktiv & Passiv.
+
 **So startest du es:**
 - Einfach `game/index.html` im Browser öffnen (Doppelklick), **oder**
 - einen lokalen Server starten (empfohlen):
