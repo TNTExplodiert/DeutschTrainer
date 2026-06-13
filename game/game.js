@@ -16,6 +16,7 @@ const elTouch = document.getElementById("touch-controls");
 const elBack = document.getElementById("btn-back");
 const overlays = {
   consent: document.getElementById("overlay-consent"),
+  mode: document.getElementById("overlay-mode"),
   menu: document.getElementById("overlay-menu"),
   map: document.getElementById("overlay-map"),
   levelcomplete: document.getElementById("overlay-levelcomplete"),
@@ -43,13 +44,23 @@ QUESTIONS.forEach((q) => { QUESTION_BY_ID[q.id] = q; });
 function questionsByTopic(t) { return QUESTIONS.filter((q) => q.topic === t); }
 
 // ---- App-Zustand ----
-let appState = "consent";           // consent | menu | map | playing | levelcomplete
+let appState = "consent";           // consent | mode | menu | map | playing | levelcomplete
+let gameMode = "obby";              // obby | dash  (Cube Dash = Geometry-Dash-Stil)
 let difficulty = "medium";
 let profile = Storage.defaultProfile();
 let session = null;                 // aktuelles Level
-let stage = null;                   // aktuelle Plattform-Anordnung
+let stage = null;                   // aktuelle Plattform-Anordnung (Obby)
 let feedback = null;
 let animTime = 0;
+
+// ---- Cube Dash (Geometry-Dash-Modus) ----
+let dash = null;
+const DASH = {
+  CX: 170, GROUND_Y: 430, BAR_Y: 300, BAR_H: 16, CUBE: 34,
+  GRAV: 0.9, JUMP: -16.5,
+  SEG_LEN: 680, BAR_START: 300, BAR_END: 600, JUDGE: 560, FINISH_PAD: 360,
+};
+const DASH_SPEED = { easy: 4.2, medium: 5.4, hard: 6.8 };
 
 const keys = { left: false, right: false, jump: false };
 const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
@@ -140,10 +151,23 @@ function startSession(mode, topic) {
     attempts: 0,
     correctFirstTry: 0,
   };
-  applyDifficulty(difficulty);
   showState("playing");
+  configureTouch();
   resize();
-  buildStage(session.queue[0]);
+  if (gameMode === "dash") {
+    startDash(queue);
+  } else {
+    applyDifficulty(difficulty);
+    buildStage(session.queue[0]);
+  }
+}
+
+// Touch-Steuerung je nach Modus: im Dash nur Springen (Laufpfeile aus)
+function configureTouch() {
+  const left = document.querySelector(".touch-left");
+  const jump = document.querySelector(".tbtn.jump");
+  if (left) left.style.display = gameMode === "dash" ? "none" : "flex";
+  if (jump) jump.textContent = gameMode === "dash" ? "⤒ SPRINGEN" : "⤒ SPRUNG";
 }
 
 /* ---------------------------------------------------------------------
@@ -201,7 +225,9 @@ function solidPlatforms() {
    ------------------------------------------------------------------- */
 function update() {
   animTime++;
-  if (appState !== "playing" || !stage) return;
+  if (appState !== "playing") return;
+  if (gameMode === "dash") { updateDash(); return; }
+  if (!stage) return;
 
   if (player.locked) {
     player.vx = 0;
@@ -313,13 +339,247 @@ function finishLevel() {
 
 function showFeedback(text, color) { feedback = { text, color, t: 90 }; }
 
+/* =====================================================================
+   CUBE DASH (Geometry-Dash-Modus)
+   Würfel rennt automatisch, springt auf Tastendruck/Tippen.
+   Pro Tor: oben = obere Antwort, unten = untere Antwort.
+   Richtig -> weiter; falsch oder Crash -> Neustart (Versuch +1).
+   ===================================================================== */
+function startDash(questions) {
+  const n = Math.min(7, questions.length);
+  const chosen = questions.slice(0, n);
+  const gates = chosen.map((q) => {
+    const correct = q.options[q.correct];
+    const others = q.options.filter((_, i) => i !== q.correct);
+    const wrong = others[Math.floor(Math.random() * others.length)];
+    const topIsCorrect = Math.random() < 0.5;
+    return {
+      q,
+      top: topIsCorrect ? correct : wrong,
+      bottom: topIsCorrect ? wrong : correct,
+      correctIsTop: topIsCorrect,
+      judged: false,
+    };
+  });
+  dash = {
+    gates,
+    speed: DASH_SPEED[difficulty] || 5.4,
+    worldX: 0,
+    attempt: 1,
+    cube: { y: DASH.GROUND_Y - DASH.CUBE, vy: 0, onGround: true, rot: 0 },
+    dead: false, deadT: 0,
+    finishX: gates.length * DASH.SEG_LEN + DASH.FINISH_PAD,
+    particles: [],
+  };
+}
+
+function updateDash() {
+  if (!dash) return;
+  const c = dash.cube;
+
+  if (dash.dead) {
+    dash.deadT++;
+    for (const p of dash.particles) { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life--; }
+    if (dash.deadT > 38) restartDash();
+    return;
+  }
+
+  // Springen (nur am Boden / auf dem Balken)
+  if (keys.jump && c.onGround) { c.vy = DASH.JUMP; c.onGround = false; }
+  c.vy += DASH.GRAV; if (c.vy > 22) c.vy = 22;
+  const prevBottom = c.y + DASH.CUBE;
+  c.y += c.vy;
+  dash.worldX += dash.speed;
+
+  // Rotation wie in Geometry Dash
+  if (c.onGround) c.rot = Math.round(c.rot / (Math.PI / 2)) * (Math.PI / 2);
+  else c.rot += dash.speed * 0.02;
+
+  // Kollision: Balken des aktuellen Segments + Boden
+  c.onGround = false;
+  const seg = Math.floor(dash.worldX / DASH.SEG_LEN);
+  const barX0 = seg * DASH.SEG_LEN + DASH.BAR_START;
+  const barX1 = seg * DASH.SEG_LEN + DASH.BAR_END;
+  let onBar = false;
+  if (dash.worldX >= barX0 && dash.worldX <= barX1 && c.vy >= 0 &&
+      prevBottom <= DASH.BAR_Y + dash.speed + 2 && c.y + DASH.CUBE >= DASH.BAR_Y) {
+    c.y = DASH.BAR_Y - DASH.CUBE; c.vy = 0; c.onGround = true; onBar = true;
+  }
+  if (!onBar && c.y + DASH.CUBE >= DASH.GROUND_Y) {
+    c.y = DASH.GROUND_Y - DASH.CUBE; c.vy = 0; c.onGround = true;
+  }
+
+  // Tore bewerten
+  const midY = (DASH.BAR_Y + DASH.GROUND_Y) / 2;
+  for (let i = 0; i < dash.gates.length; i++) {
+    const g = dash.gates[i];
+    if (g.judged) continue;
+    if (dash.worldX >= i * DASH.SEG_LEN + DASH.JUDGE) {
+      g.judged = true;
+      const choseTop = (c.y + DASH.CUBE / 2) < midY;
+      const correct = (choseTop === g.correctIsTop);
+      Storage.recordAnswer(profile, g.q, correct);
+      Storage.saveProfile(profile);
+      if (!correct) { dashDie(); return; }
+    }
+  }
+
+  if (dash.worldX >= dash.finishX) { dashFinish(); }
+}
+
+function dashDie() {
+  dash.dead = true; dash.deadT = 0;
+  const c = dash.cube;
+  dash.particles = [];
+  for (let i = 0; i < 16; i++) {
+    dash.particles.push({
+      x: DASH.CX + DASH.CUBE / 2, y: c.y + DASH.CUBE / 2,
+      vx: (Math.random() - 0.5) * 11, vy: (Math.random() - 0.7) * 11,
+      life: 30 + Math.random() * 12,
+    });
+  }
+}
+
+function restartDash() {
+  dash.dead = false; dash.deadT = 0;
+  dash.worldX = 0; dash.attempt++;
+  for (const g of dash.gates) g.judged = false;
+  dash.cube.y = DASH.GROUND_Y - DASH.CUBE;
+  dash.cube.vy = 0; dash.cube.onGround = true; dash.cube.rot = 0;
+  dash.particles = [];
+}
+
+function dashFinish() {
+  if (session.mode === "topic") profile.completed[session.topic] = true;
+  Storage.saveProfile(profile);
+  document.getElementById("lc-title").textContent = "🏆 Level geschafft!";
+  document.getElementById("lc-stats").innerHTML =
+    (session.mode === "topic" && TOPIC_INFO[session.topic] ? TOPIC_INFO[session.topic].name : "Übungs-Mix") +
+    "<br>Versuche: <b>" + dash.attempt + "</b> · Tore: <b>" + dash.gates.length + "</b>";
+  dash = null;
+  showState("levelcomplete");
+}
+
+/* ---- Cube Dash zeichnen ---- */
+function drawDash() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#1f6dff"); g.addColorStop(1, "#0b3fb0");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  drawDashBlocks();
+
+  const seg = Math.floor(dash.worldX / DASH.SEG_LEN);
+  for (let i = Math.max(0, seg - 1); i <= seg + 1 && i < dash.gates.length; i++) drawDashGate(i);
+
+  const finishSx = DASH.CX + (dash.finishX - dash.worldX);
+  if (finishSx < W + 40) {
+    ctx.fillStyle = "#7CFC00"; ctx.fillRect(finishSx, 30, 10, DASH.GROUND_Y - 30);
+    ctx.fillStyle = "rgba(124,252,0,0.3)"; ctx.fillRect(finishSx - 12, 30, 12, DASH.GROUND_Y - 30);
+  }
+
+  ctx.fillStyle = "#0a2e7a"; ctx.fillRect(0, DASH.GROUND_Y, W, H - DASH.GROUND_Y);
+  ctx.fillStyle = "#5b9bff"; ctx.fillRect(0, DASH.GROUND_Y, W, 5);
+
+  if (dash.dead) {
+    ctx.fillStyle = "#7CFC00";
+    for (const p of dash.particles) if (p.life > 0) ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
+  } else {
+    drawCube();
+  }
+  drawDashHud();
+}
+
+function drawDashBlocks() {
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  const off = (dash.worldX * 0.5) % 120;
+  for (let x = -120; x < W + 120; x += 120) {
+    for (let y = 18; y < DASH.GROUND_Y - 40; y += 110) {
+      ctx.fillRect(x - off + ((y / 110) % 2) * 60, y, 80, 70);
+    }
+  }
+  ctx.fillStyle = "rgba(150,255,150,0.45)";
+  const off2 = (dash.worldX * 1.2) % 90;
+  for (let x = -90; x < W + 90; x += 90) {
+    ctx.fillRect(x - off2, 60 + ((x * 7) % 220), 5, 5);
+  }
+}
+
+function drawDashGate(i) {
+  const g = dash.gates[i];
+  const base = i * DASH.SEG_LEN;
+  const sx0 = DASH.CX + (base + DASH.BAR_START - dash.worldX);
+  const sx1 = DASH.CX + (base + DASH.BAR_END - dash.worldX);
+  // gestrichelter Balken (wie in Geometry Dash)
+  ctx.fillStyle = "#ffffff";
+  for (let x = sx0; x < sx1 - 14; x += 26) ctx.fillRect(x, DASH.BAR_Y, 14, DASH.BAR_H);
+  // Antwort-Labels
+  ctx.textAlign = "center";
+  ctx.font = "bold 22px Trebuchet MS";
+  const cx = (sx0 + sx1) / 2;
+  dashLabel(g.top, cx, DASH.BAR_Y - 22);
+  dashLabel(g.bottom, cx, DASH.GROUND_Y - 16);
+  ctx.textAlign = "left";
+}
+
+function dashLabel(text, x, y) {
+  ctx.lineWidth = 4; ctx.strokeStyle = "rgba(0,35,110,0.85)";
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(text, x, y);
+}
+
+function drawCube() {
+  const c = dash.cube, s = DASH.CUBE;
+  ctx.save();
+  ctx.translate(DASH.CX + s / 2, c.y + s / 2);
+  ctx.rotate(c.rot);
+  ctx.fillStyle = "#7CFC00";
+  ctx.fillRect(-s / 2, -s / 2, s, s);
+  ctx.lineWidth = 3; ctx.strokeStyle = "#ffffff";
+  ctx.strokeRect(-s / 2, -s / 2, s, s);
+  ctx.fillStyle = "#08321f";
+  ctx.fillRect(-8, -6, 5, 6); ctx.fillRect(3, -6, 5, 6);
+  ctx.fillRect(-8, 6, 16, 3);
+  ctx.restore();
+}
+
+function dashRoundRect(x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, h / 2, w / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawDashHud() {
+  const pct = Math.max(0, Math.min(1, dash.worldX / dash.finishX));
+  const bx = 110, by = 22, bw = W - 230;
+  ctx.fillStyle = "rgba(255,255,255,0.22)"; dashRoundRect(bx, by, bw, 16, 8); ctx.fill();
+  if (pct > 0) { ctx.fillStyle = "#7CFC00"; dashRoundRect(bx, by, bw * pct, 16, 8); ctx.fill(); }
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; dashRoundRect(bx, by, bw, 16, 8); ctx.stroke();
+  ctx.fillStyle = "#fff"; ctx.textAlign = "left"; ctx.font = "bold 16px Trebuchet MS";
+  ctx.fillText(Math.round(pct * 100) + "%", bx + bw + 12, by + 14);
+  ctx.font = "bold 18px Trebuchet MS";
+  ctx.fillText("VERSUCH " + dash.attempt, bx, by + 46);
+
+  const next = dash.gates.find((g) => !g.judged);
+  if (next) {
+    ctx.textAlign = "center"; ctx.font = "bold 24px Trebuchet MS";
+    dashLabel(next.q.q, W / 2, 118);
+    ctx.textAlign = "left";
+  }
+}
+
 /* ---------------------------------------------------------------------
    Zeichnen
    ------------------------------------------------------------------- */
 function draw() {
+  if (appState === "playing" && gameMode === "dash" && dash) { drawDash(); return; }
   drawSky();
   drawClouds();
-  if (appState === "playing" && stage) {
+  if (appState === "playing" && gameMode === "obby" && stage) {
     drawLava();
     drawPlatform(stage.checkpoint, "#6d4c41", "🏁 Start");
     if (stage.bridge) drawPlatform(stage.bridge, "#43a047");
@@ -462,7 +722,7 @@ function makeCard(icon, name, status, cls) {
 }
 function renderMap() {
   mapGrid.innerHTML = "";
-  mapDiff.textContent = "Schwierigkeit: " + DIFF[difficulty].label;
+  mapDiff.textContent = (gameMode === "dash" ? "🔺 Cube Dash" : "🧗 Obby") + " · " + DIFF[difficulty].label;
 
   const due = dueCountTotal();
   const adaptive = makeCard("🎯", "Übungs-Mix",
@@ -485,6 +745,12 @@ function renderMap() {
 function selectDifficultyUI() {
   document.querySelectorAll(".diff-btn").forEach((b) =>
     b.classList.toggle("selected", b.dataset.diff === difficulty));
+}
+function selectModeUI() {
+  document.querySelectorAll(".mode-btn").forEach((b) =>
+    b.classList.toggle("selected", b.dataset.mode === gameMode));
+  const badge = document.getElementById("menu-mode");
+  if (badge) badge.textContent = gameMode === "dash" ? "🔺 Cube Dash" : "🧗 Obby";
 }
 function updateConsentStatus() {
   const el = document.getElementById("consent-status");
@@ -539,6 +805,7 @@ canvas.addEventListener("touchstart", (e) => {
   e.preventDefault();
   const r = canvas.getBoundingClientRect();
   for (const t of e.changedTouches) {
+    if (gameMode === "dash") { jumpTouches.add(t.identifier); keys.jump = true; continue; }
     const cx = (t.clientX - r.left) * (W / r.width);
     if (cx > W / 2) { jumpTouches.add(t.identifier); keys.jump = true; }
   }
@@ -553,19 +820,32 @@ canvas.addEventListener("touchcancel", endCanvasTouch, { passive: false });
 /* ---------------------------------------------------------------------
    DOM-Buttons verdrahten
    ------------------------------------------------------------------- */
+function syncFromProfile() {
+  difficulty = profile.difficulty || "medium";
+  gameMode = profile.gameMode || "obby";
+  selectDifficultyUI(); selectModeUI(); updateConsentStatus();
+}
 document.getElementById("consent-accept").onclick = () => {
   Storage.grantConsent();
   profile = Storage.loadProfile();
-  difficulty = profile.difficulty || "medium";
-  selectDifficultyUI(); updateConsentStatus();
-  showState("menu");
+  syncFromProfile();
+  showState("mode");
 };
 document.getElementById("consent-decline").onclick = () => {
   Storage.declineConsent();
   profile = Storage.defaultProfile();
-  selectDifficultyUI(); updateConsentStatus();
-  showState("menu");
+  syncFromProfile();
+  showState("mode");
 };
+document.querySelectorAll(".mode-btn").forEach((b) => {
+  b.onclick = () => {
+    gameMode = b.dataset.mode;
+    profile.gameMode = gameMode;
+    Storage.saveProfile(profile);
+    selectModeUI();
+    showState("menu");
+  };
+});
 document.querySelectorAll(".diff-btn").forEach((b) => {
   b.onclick = () => {
     difficulty = b.dataset.diff;
@@ -574,8 +854,9 @@ document.querySelectorAll(".diff-btn").forEach((b) => {
     selectDifficultyUI();
   };
 });
+document.getElementById("menu-back").onclick = () => { selectModeUI(); showState("mode"); };
 document.getElementById("goto-map").onclick = () => { renderMap(); showState("map"); };
-document.getElementById("map-back").onclick = () => { selectDifficultyUI(); showState("menu"); };
+document.getElementById("map-back").onclick = () => { selectDifficultyUI(); selectModeUI(); showState("menu"); };
 document.getElementById("lc-again").onclick = () => startSession(session.mode, session.topic);
 document.getElementById("lc-map").onclick = () => { renderMap(); showState("map"); };
 elBack.onclick = () => { renderMap(); showState("map"); };
@@ -589,9 +870,8 @@ function init() {
   resize();
   if (Storage.consentAnswered()) {
     profile = Storage.loadProfile();
-    difficulty = profile.difficulty || "medium";
-    selectDifficultyUI(); updateConsentStatus();
-    showState("menu");
+    syncFromProfile();
+    showState("mode");
   } else {
     profile = Storage.defaultProfile();
     showState("consent");

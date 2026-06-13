@@ -127,6 +127,28 @@ canvas {
   background: #555f78; color: #fff; font-weight: bold; cursor: pointer;
 }
 
+/* Modus-Auswahl */
+.mode-row { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 16px; }
+.mode-btn {
+  flex: 1 1 200px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: 3px solid #454f6e;
+  border-radius: 16px;
+  padding: 20px 16px;
+  background: #353c52;
+  color: #fff;
+  cursor: pointer;
+}
+.mode-btn:active { transform: scale(0.97); }
+.mode-btn.selected { border-color: #ffd34d; background: #434c69; }
+.mode-btn .mode-ic { font-size: 40px; }
+.mode-btn .mode-name { font-size: 20px; font-weight: bold; }
+.mode-btn .mode-desc { font-size: 13px; color: #c4cbe0; text-align: center; }
+
 /* Schwierigkeits-Buttons */
 .diff-btn {
   border: 3px solid transparent;

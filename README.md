@@ -30,8 +30,10 @@ Roblox-Stil** (Idee #5 aus den Spielideen):
 > falsche Plattformen brechen weg!
 
 **Funktionen:**
+- 🎮 **Zwei Spielmodi**: **Obby** (auf die richtige Plattform springen) und
+  **Cube Dash** (Geometry-Dash-Stil: Würfel rennt, oben/unten = Antwort wählen)
 - 📱 **Responsive** – passt sich automatisch der Fenster-/Tab-Größe an
-- 🟢🟡🔴 **Schwierigkeitsgrade**: Leicht / Mittel / Schwer
+- 🟢🟡🔴 **Schwierigkeitsgrade**: Leicht / Mittel / Schwer (steuern das **Gameplay-Tempo**)
 - 🗺️ **Levelkarte** mit Levels nach **Thema** gegliedert
 - 🔁 **Falsch gelöste Aufgaben werden wiederholt**, bis sie sitzen
 - 🧠 **Lernprofil**: merkt sich Problem-Themen → **Übungs-Mix** wiederholt diese gezielt
