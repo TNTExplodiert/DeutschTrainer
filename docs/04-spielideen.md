@@ -35,10 +35,12 @@ Jede Idee hat: **Spielprinzip → Wie der Deutsch-Stoff eingebaut wird → Was e
 
 ## 🟥 Im Stil von Roblox
 
-### 5. „Grammatik-Obby" (Hindernisparcours)
+### 5. „Grammatik-Obby" (Hindernisparcours) ✅ FERTIG & SPIELBAR
 - **Spielprinzip:** Klassischer Roblox-**Obby**: von Plattform zu Plattform springen. Jede Plattform ist ein **Tor mit Antwortmöglichkeiten**.
 - **Deutsch-Stoff:** Frage z. B. *„Welches ist das Subjekt?"* – nur die richtige Plattform trägt dich, die falschen verschwinden (lava = falsch).
 - **Trainiert:** Satzglieder, Aktiv/Passiv, Wortarten – beliebig erweiterbar.
+- **👉 Diese Idee ist umgesetzt!** Spiel im Ordner [`../game/`](../game/) –
+  einfach `game/index.html` im Browser öffnen. Neue Fragen in `game/questions.js`.
 
 ### 6. „Deutsch-Tycoon"
 - **Spielprinzip:** Wie ein Roblox-**Tycoon**: Du baust eine eigene Stadt/Schule. Für jede richtig gelöste Aufgabe bekommst du **Geld/Bausteine**.

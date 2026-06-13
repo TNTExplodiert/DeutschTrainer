@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grammatik-Obby 🧗 – DeutschTrainer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game-wrap">
+    <canvas id="game" width="960" height="540"></canvas>
+
+    <!-- On-Screen-Steuerung für Handy/Tablet -->
+    <div id="touch-controls">
+      <div class="touch-left">
+        <button class="tbtn" data-key="left">◀</button>
+        <button class="tbtn" data-key="right">▶</button>
+      </div>
+      <div class="touch-right">
+        <button class="tbtn jump" data-key="jump">⤒ SPRUNG</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint">
+    Steuerung: <b>← →</b> (oder A/D) laufen · <b>Leertaste / ↑</b> springen ·
+    In der Luft mit <b>← →</b> lenken. Springe auf die Plattform mit der <b>richtigen Antwort!</b>
+  </p>
+
+  <script src="questions.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

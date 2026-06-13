@@ -21,11 +21,33 @@ Ziel: Den Lernstoff – vor allem **Rechtschreibung** und **Grammatik** – mit 
 2. Vertiefe **Rechtschreibung** und **Grammatik** mit den Merk-Dokumenten.
 3. Wähle aus den **Spielideen** das aus, was dir Spaß macht, und übe damit.
 
+## 🎮 Spielbar: Grammatik-Obby
+
+Im Ordner [`game/`](game/) liegt ein fertiges, spielbares **Hindernis-Spiel im
+Roblox-Stil** (Idee #5 aus den Spielideen):
+
+> Springe über die Lava auf die Plattform mit der **richtigen Antwort** –
+> falsche Plattformen brechen weg!
+
+**So startest du es:**
+- Einfach `game/index.html` im Browser öffnen (Doppelklick), **oder**
+- einen lokalen Server starten (empfohlen):
+  ```bash
+  cd game
+  python3 -m http.server 8000
+  # dann im Browser: http://localhost:8000
+  ```
+
+**Steuerung:** `← →` (oder A/D) laufen · `Leertaste / ↑` springen · in der Luft lenken.
+Funktioniert auch auf dem Handy/Tablet (Touch-Buttons).
+
+Neue Fragen kann man leicht in [`game/questions.js`](game/questions.js) ergänzen.
+
 ## 🗺️ Nächste Schritte (Ideen für die Umsetzung)
 
-- Prototyp eines Quiz-Spiels (Web, HTML/JavaScript)
-- Aufgaben-Datenbank (z. B. JSON) mit Übungssätzen pro Themengebiet
-- Punktesystem / Level wie bei Geometry Dash
+- Weitere Spielideen umsetzen (z. B. „Rechtschreib-Rush" im Geometry-Dash-Stil)
+- Mehr Fragen pro Thema in die Aufgaben-Datenbank aufnehmen
+- Level, Soundeffekte und Bestenliste ergänzen
 
 > Hinweis: Diese Übersicht ersetzt nicht den offiziellen LehrplanPLUS des
 > Bayerischen Staatsministeriums. Schulbücher und Lehrkraft sind maßgeblich.
