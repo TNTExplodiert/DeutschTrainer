@@ -48,17 +48,18 @@ canvas {
   padding: 16px;
   pointer-events: none;     /* nur die Buttons sind klickbar */
 }
-.touch-left, .touch-right { display: flex; gap: 12px; }
+.touch-left, .touch-right { display: flex; gap: 14px; }
+.touch-left { margin-left: 10px; }   /* 10 px nach rechts geschoben */
 
 .tbtn {
   pointer-events: auto;
-  width: 70px;
-  height: 70px;
+  width: 92px;
+  height: 92px;
   border: none;
-  border-radius: 16px;
+  border-radius: 18px;
   background: rgba(20, 24, 36, 0.55);
   color: #fff;
-  font-size: 26px;
+  font-size: 34px;
   font-weight: bold;
   user-select: none;
   -webkit-user-select: none;
@@ -66,8 +67,8 @@ canvas {
 }
 .tbtn.jump {
   width: auto;
-  padding: 0 22px;
+  padding: 0 30px;
   background: rgba(76, 175, 80, 0.7);
-  font-size: 18px;
+  font-size: 22px;
 }
 .tbtn:active { background: rgba(255, 211, 77, 0.8); color: #1d2230; }

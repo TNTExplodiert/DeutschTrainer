@@ -40,6 +40,7 @@ const player = {
   spawnX: 0, spawnY: 0,
   face: "smile",  // "smile" | "happy" | "ouch"
   blink: 0,
+  locked: false,  // bei falscher Antwort gesperrt: keine X-Bewegung bis zum Respawn
 };
 
 /* ---------------------------------------------------------------------
@@ -98,6 +99,7 @@ function respawn() {
   player.vy = 0;
   player.onGround = true;
   player.face = "smile";
+  player.locked = false;
 }
 
 /* ---------------------------------------------------------------------
@@ -119,17 +121,22 @@ function update() {
   animTime++;
   if (state !== "playing") return;
 
-  // ---- horizontale Bewegung ----
-  const accel = player.onGround ? RUN_ACCEL : AIR_ACCEL;
-  if (keys.left) player.vx -= accel;
-  if (keys.right) player.vx += accel;
-  if (!keys.left && !keys.right && player.onGround) player.vx *= FRICTION;
-  player.vx = Math.max(-MAX_RUN_SPEED, Math.min(MAX_RUN_SPEED, player.vx));
+  if (player.locked) {
+    // Bei falscher Antwort: keine Steuerung mehr, Figur fällt gerade nach unten
+    player.vx = 0;
+  } else {
+    // ---- horizontale Bewegung ----
+    const accel = player.onGround ? RUN_ACCEL : AIR_ACCEL;
+    if (keys.left) player.vx -= accel;
+    if (keys.right) player.vx += accel;
+    if (!keys.left && !keys.right && player.onGround) player.vx *= FRICTION;
+    player.vx = Math.max(-MAX_RUN_SPEED, Math.min(MAX_RUN_SPEED, player.vx));
 
-  // ---- springen ----
-  if (keys.jump && player.onGround) {
-    player.vy = JUMP_VELOCITY;
-    player.onGround = false;
+    // ---- springen ----
+    if (keys.jump && player.onGround) {
+      player.vy = JUMP_VELOCITY;
+      player.onGround = false;
+    }
   }
 
   // ---- Schwerkraft ----
@@ -205,11 +212,13 @@ function onLand(p) {
       };
       stage.solved = true;
     } else {
-      // falsch -> Plattform bricht weg
+      // falsch -> Plattform bricht weg, Figur wird gesperrt (kein X-Movement)
       p.state = "breaking";
       p.breakT = 0;
       player.face = "ouch";
-      player.vy = -4;          // kleiner Stups, dann Sturz
+      player.vx = 0;
+      player.vy = -4;          // kleiner Stups, dann gerader Sturz
+      player.locked = true;
       showFeedback("Falsch! Plattform bricht …", "#ff5252");
     }
   }
@@ -219,6 +228,7 @@ function nextStage() {
   stageIndex++;
   if (stageIndex >= order.length) {
     state = "win";
+    updateTouchVisibility();
   } else {
     buildStage(stageIndex);
   }
@@ -518,6 +528,7 @@ function startGame() {
   attempts = 0;
   buildStage(0);
   state = "playing";
+  updateTouchVisibility();
 }
 
 function handleClick(mx, my) {
@@ -549,19 +560,43 @@ window.addEventListener("keyup", (e) => {
   if (keyMap[e.code]) { keys[keyMap[e.code]] = false; e.preventDefault(); }
 });
 
-// Touch-Buttons
-if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
-  document.getElementById("touch-controls").style.display = "flex";
+// Touch-Steuerung nur auf Touch-Geräten und nur während des Spiels anzeigen
+const touchControls = document.getElementById("touch-controls");
+const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+function updateTouchVisibility() {
+  touchControls.style.display = (isTouch && state === "playing") ? "flex" : "none";
 }
+updateTouchVisibility();
+
+// Die ◀ ▶ und SPRUNG-Buttons
 document.querySelectorAll(".tbtn").forEach((btn) => {
   const k = btn.dataset.key;
   const on = (e) => { e.preventDefault(); keys[k] = true; if (state !== "playing") startGame(); };
   const off = (e) => { e.preventDefault(); keys[k] = false; };
-  btn.addEventListener("touchstart", on);
-  btn.addEventListener("touchend", off);
+  btn.addEventListener("touchstart", on, { passive: false });
+  btn.addEventListener("touchend", off, { passive: false });
   btn.addEventListener("mousedown", on);
   btn.addEventListener("mouseup", off);
 });
+
+// Tippen auf die RECHTE Hälfte des Spielfelds = springen (egal wo).
+// Im Menü / Gewinn-Bildschirm startet ein Tipp das Spiel.
+const jumpTouches = new Set();
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  for (const t of e.changedTouches) {
+    if (state !== "playing") { startGame(); continue; }
+    const cx = (t.clientX - r.left) * (W / r.width);
+    if (cx > W / 2) { jumpTouches.add(t.identifier); keys.jump = true; }
+  }
+}, { passive: false });
+function endCanvasTouch(e) {
+  for (const t of e.changedTouches) jumpTouches.delete(t.identifier);
+  if (jumpTouches.size === 0) keys.jump = false;
+}
+canvas.addEventListener("touchend", endCanvasTouch, { passive: false });
+canvas.addEventListener("touchcancel", endCanvasTouch, { passive: false });
 
 /* ---- Hauptschleife ---- */
 function loop() {
