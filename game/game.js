@@ -763,14 +763,20 @@ function updateConsentStatus() {
    Responsive: Canvas an Fenstergröße anpassen (Seitenverhältnis bleibt)
    ------------------------------------------------------------------- */
 function resize() {
-  const availW = elApp.clientWidth;
-  const availH = elApp.clientHeight;
+  // Tatsächlich sichtbaren Bereich messen (Mobil-Safari: Toolbars zählen bei
+  // 100vh fälschlich mit -> Spiel wurde unten abgeschnitten).
+  const vv = window.visualViewport;
+  const availW = Math.round(vv ? vv.width : window.innerWidth);
+  const availH = Math.round(vv ? vv.height : window.innerHeight);
+  elApp.style.width = availW + "px";
+  elApp.style.height = availH + "px";
   const scale = Math.min(availW / W, availH / H);
   canvas.style.width = Math.floor(W * scale) + "px";
   canvas.style.height = Math.floor(H * scale) + "px";
 }
 window.addEventListener("resize", resize);
-window.addEventListener("orientationchange", resize);
+window.addEventListener("orientationchange", () => { resize(); setTimeout(resize, 300); });
+if (window.visualViewport) window.visualViewport.addEventListener("resize", resize);
 
 /* ---------------------------------------------------------------------
    Eingaben
