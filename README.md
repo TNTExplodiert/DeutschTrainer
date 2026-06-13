@@ -23,11 +23,19 @@ Ziel: Den Lernstoff – vor allem **Rechtschreibung** und **Grammatik** – mit 
 
 ## 🎮 Spielbar: Grammatik-Obby
 
-Im Ordner [`game/`](game/) liegt ein fertiges, spielbares **Hindernis-Spiel im
+Im Ordner [`game/`](game/) liegt eine fertige, spielbare **Lern-App im
 Roblox-Stil** (Idee #5 aus den Spielideen):
 
 > Springe über die Lava auf die Plattform mit der **richtigen Antwort** –
 > falsche Plattformen brechen weg!
+
+**Funktionen:**
+- 📱 **Responsive** – passt sich automatisch der Fenster-/Tab-Größe an
+- 🟢🟡🔴 **Schwierigkeitsgrade**: Leicht / Mittel / Schwer
+- 🗺️ **Levelkarte** mit Levels nach **Thema** gegliedert
+- 🔁 **Falsch gelöste Aufgaben werden wiederholt**, bis sie sitzen
+- 🧠 **Lernprofil**: merkt sich Problem-Themen → **Übungs-Mix** wiederholt diese gezielt
+- 🍪 **Fortschritt wird in Cookies gespeichert** (mit Zustimmungs-Banner)
 
 **So startest du es:**
 - Einfach `game/index.html` im Browser öffnen (Doppelklick), **oder**

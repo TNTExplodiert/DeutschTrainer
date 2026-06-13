@@ -2,16 +2,16 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Grammatik-Obby 🧗 – DeutschTrainer</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="game-wrap">
+  <div id="app">
     <canvas id="game" width="960" height="540"></canvas>
 
     <!-- On-Screen-Steuerung für Handy/Tablet -->
-    <div id="touch-controls">
+    <div id="touch-controls" class="hidden">
       <div class="touch-left">
         <button class="tbtn" data-key="left">◀</button>
         <button class="tbtn" data-key="right">▶</button>
@@ -20,16 +20,79 @@
         <button class="tbtn jump" data-key="jump">⤒ SPRUNG</button>
       </div>
     </div>
+
+    <!-- Mini-HUD oben links während des Spiels -->
+    <button id="btn-back" class="hidden">↩ Karte</button>
+
+    <!-- ============ Overlays ============ -->
+
+    <!-- Cookie-Banner -->
+    <div id="overlay-consent" class="overlay">
+      <div class="panel">
+        <h1>🍪 Kurz vorab</h1>
+        <p>
+          Wir möchten deinen <b>Lernfortschritt</b> und dein <b>Profil</b>
+          (welche Themen dir schwerfallen) in <b>Cookies</b> in deinem Browser
+          speichern. So kannst du beim nächsten Mal genau da weitermachen.
+        </p>
+        <p class="small">
+          Es werden keine Daten an Server gesendet – alles bleibt nur auf diesem Gerät.
+          Lehnst du ab, kannst du trotzdem spielen, aber dein Fortschritt wird nicht gespeichert.
+        </p>
+        <div class="btn-row">
+          <button id="consent-accept" class="big-btn green">✓ Zustimmen & speichern</button>
+          <button id="consent-decline" class="big-btn grey">Ohne Speichern spielen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hauptmenü: Schwierigkeit -->
+    <div id="overlay-menu" class="overlay hidden">
+      <div class="panel">
+        <h1>🧗 GRAMMATIK-OBBY</h1>
+        <p>Springe über die Lava auf die Plattform mit der <b>richtigen Antwort!</b><br />
+           Deutsch · 7. Klasse Realschule Bayern</p>
+        <h2>Schwierigkeit wählen</h2>
+        <div class="btn-row" id="difficulty-row">
+          <button class="diff-btn" data-diff="easy">🟢 Leicht</button>
+          <button class="diff-btn" data-diff="medium">🟡 Mittel</button>
+          <button class="diff-btn" data-diff="hard">🔴 Schwer</button>
+        </div>
+        <div class="btn-row">
+          <button id="goto-map" class="big-btn green">▶ Zur Levelkarte</button>
+        </div>
+        <p class="small" id="consent-status"></p>
+      </div>
+    </div>
+
+    <!-- Übersichtskarte: Levels nach Thema -->
+    <div id="overlay-map" class="overlay hidden">
+      <div class="panel wide">
+        <div class="map-head">
+          <button id="map-back" class="small-btn">↩ Menü</button>
+          <h1>🗺️ Levelkarte</h1>
+          <span id="map-diff" class="badge"></span>
+        </div>
+        <p class="small">Wähle ein Thema. ⭐ = gemeistert · ⚠️ = noch üben. Falsch gelöste Aufgaben kommen wieder, bis du sie kannst.</p>
+        <div id="map-grid" class="map-grid"></div>
+      </div>
+    </div>
+
+    <!-- Level abgeschlossen -->
+    <div id="overlay-levelcomplete" class="overlay hidden">
+      <div class="panel">
+        <h1 id="lc-title">🏆 Geschafft!</h1>
+        <p id="lc-stats"></p>
+        <div class="btn-row">
+          <button id="lc-again" class="big-btn yellow">↻ Nochmal</button>
+          <button id="lc-map" class="big-btn green">🗺️ Zur Karte</button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <p class="hint">
-    <b>Tastatur:</b> A / D (oder ← →) laufen · <b>W / Leertaste / ↑</b> springen ·
-    in der Luft mit ← → lenken.<br />
-    <b>Touch:</b> ◀ ▶ laufen · auf die <b>rechte Bildhälfte tippen = springen</b>.
-    Springe auf die Plattform mit der <b>richtigen Antwort!</b>
-  </p>
-
   <script src="questions.js"></script>
+  <script src="storage.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
