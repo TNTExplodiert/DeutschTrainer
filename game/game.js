@@ -72,7 +72,7 @@ const DASH_SPEED = { easy: 4.2, medium: 5.4, hard: 6.8 };
 
 // ---- Wave (Geometry-Dash-Wave-Modus) ----
 let wave = null;
-const WAVE = { CX: 170, TOP: 74, BOT: 516, SZ: 20, APPROACH: 1180, TUNNEL: 900, PAD: 360 };
+const WAVE = { CX: 170, TOP: 74, BOT: 516, SZ: 20, APPROACH: 1500, TUNNEL: 900, PAD: 360, WALL: 34 };
 const WAVE_SPEED = { easy: 3.6, medium: 4.6, hard: 5.8 };
 const WAVE_SEC = WAVE.APPROACH + WAVE.TUNNEL;
 
@@ -447,7 +447,8 @@ function updateDash() {
   if (dash.dead) {
     dash.deadT++;
     for (const p of dash.particles) { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life--; }
-    if (dash.deadT > 38) restartDash();
+    if (!keys.jump) dash.needRelease = false;            // erst loslassen …
+    if (dash.deadT > 12 && !dash.needRelease && keys.jump) restartDash();   // … dann neu starten
     return;
   }
 
@@ -495,7 +496,7 @@ function updateDash() {
 }
 
 function dashDie() {
-  dash.dead = true; dash.deadT = 0;
+  dash.dead = true; dash.deadT = 0; dash.needRelease = true;
   const c = dash.cube;
   dash.particles = [];
   for (let i = 0; i < 16; i++) {
@@ -561,7 +562,8 @@ function updateWave() {
   if (wave.dead) {
     wave.deadT++;
     for (const p of wave.particles) { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life--; }
-    if (wave.deadT > 38) restartWave();
+    if (!keys.jump) wave.needRelease = false;            // erst loslassen …
+    if (wave.deadT > 12 && !wave.needRelease && keys.jump) restartWave();   // … dann neu starten
     return;
   }
 
@@ -588,8 +590,8 @@ function updateWave() {
       }
     }
 
-    // Tunnelende: im richtigen Band weiter, sonst Wand -> Crash
-    if (wave.worldX >= tunnelEnd && !lay.judged) {
+    // An der Wand (kurz vor Tunnelende): falsches Band -> Crash an der roten Wand
+    if (wave.worldX >= tunnelEnd - WAVE.WALL && !lay.judged) {
       lay.judged = true;
       const band = Math.max(0, Math.min(lay.n - 1, Math.floor(((s.y + WAVE.SZ / 2) - WAVE.TOP) / laneH)));
       const correct = (band === lay.correctBand);
@@ -603,7 +605,7 @@ function updateWave() {
 }
 
 function waveDie() {
-  wave.dead = true; wave.deadT = 0;
+  wave.dead = true; wave.deadT = 0; wave.needRelease = true;
   const s = wave.ship;
   wave.particles = [];
   for (let i = 0; i < 16; i++) {
@@ -672,26 +674,26 @@ function drawWaveSection(sec) {
     const a = Math.max(0, sx0), b = Math.min(W, sx1);
     if (b > a) ctx.fillRect(a, yk - 3, b - a, 6);
   }
-  // Endwände der FALSCHEN Bänder (kommen erst spät ins Bild -> verraten nichts)
+  // Endwände der FALSCHEN Bänder – genau dort, wo der Crash passiert (Tunnelende)
+  const wfx0 = WAVE.CX + (tunnelEnd - WAVE.WALL - wave.worldX);
+  const wfx1 = WAVE.CX + (tunnelEnd - wave.worldX);
   for (let band = 0; band < lay.n; band++) {
     if (band === lay.correctBand) continue;
-    const yTop = WAVE.TOP + band * laneH + 4, h = laneH - 8;
-    if (sx1 - 26 < W && sx1 > 0) {
+    if (wfx1 > 0 && wfx0 < W) {
       ctx.fillStyle = "#ff3b6b";
-      ctx.fillRect(Math.max(0, sx1 - 26), yTop, 26, h);
+      ctx.fillRect(wfx0, WAVE.TOP + band * laneH + 4, Math.max(6, wfx1 - wfx0), laneH - 8);
     }
   }
-  // Antwort-Labels: sobald der Tunnel in Sicht ist, am rechten Rand einblenden
-  // und mit dem Eingang nach links wandern – bleibt die ganze Anflugzone lesbar.
-  const labelX = Math.min(sx0 - 60, W - 200);
-  if (sx0 > WAVE.CX && labelX > -200) {
+  // Antwort-Labels FRÜH in der Anflugzone, direkt an den Bändern ausgerichtet
+  const lx = WAVE.CX + (secStart + 280 - wave.worldX);
+  if (lx > -280 && lx < W + 60) {
     for (let band = 0; band < lay.n; band++) {
       const yc = WAVE.TOP + band * laneH + laneH / 2;
-      const w = Math.min(360, laneH > 90 ? 360 : 240);
-      ctx.fillStyle = "rgba(10,8,30,0.78)";
-      dashRoundRect(labelX - w / 2, yc - Math.min(22, laneH / 2 - 4), w, Math.min(44, laneH - 8), 8); ctx.fill();
+      const w = laneH > 90 ? 360 : 250;
+      ctx.fillStyle = "rgba(10,8,30,0.82)";
+      dashRoundRect(lx - w / 2, yc - Math.min(24, laneH / 2 - 3), w, Math.min(48, laneH - 6), 8); ctx.fill();
       ctx.fillStyle = "#fff"; ctx.textAlign = "center";
-      drawWrapped(lay.labels[band], labelX, yc + 4, w - 16, Math.min(40, laneH - 12), 16);
+      drawWrapped(lay.labels[band], lx, yc + 4, w - 16, Math.min(42, laneH - 12), 17);
       ctx.textAlign = "left";
     }
   }
@@ -721,13 +723,14 @@ function drawWaveHud() {
   ctx.fillText("VERSUCH " + wave.attempt, 12, by + 11);
 
   if (wave.dead) {
-    if (wave.lastExplain) {
-      roundBlock(W / 2 - 330, 150, 660, 60, "rgba(8,6,30,0.92)");
-      ctx.fillStyle = "#ff8a80"; ctx.textAlign = "center"; ctx.font = "bold 20px Trebuchet MS";
-      ctx.fillText("Falsch!", W / 2, 144);
-      ctx.fillStyle = "#ffe08a"; drawWrapped("💡 " + wave.lastExplain, W / 2, 182, 630, 48, 16);
-      ctx.textAlign = "left";
-    }
+    roundBlock(W / 2 - 340, 150, 680, 96, "rgba(8,6,30,0.95)");
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ff8a80"; ctx.font = "bold 22px Trebuchet MS";
+    ctx.fillText(wave.lastExplain ? "Falsch!" : "Crash!", W / 2, 178);
+    if (wave.lastExplain) { ctx.fillStyle = "#ffe08a"; drawWrapped("💡 " + wave.lastExplain, W / 2, 206, 640, 38, 16); }
+    ctx.fillStyle = "#9fd0ff"; ctx.font = "bold 15px Trebuchet MS";
+    ctx.fillText("▶ Steigen / Klicken zum Neustart", W / 2, 236);
+    ctx.textAlign = "left";
     return;
   }
   const sec = Math.floor(wave.worldX / WAVE_SEC);
@@ -847,14 +850,14 @@ function drawDashHud() {
 
   // Crash: Erklärung anzeigen
   if (dash.dead) {
-    if (dash.lastExplain) {
-      roundBlock(W / 2 - 330, 150, 660, 60, "rgba(8,16,40,0.92)");
-      ctx.fillStyle = "#ff8a80"; ctx.textAlign = "center"; ctx.font = "bold 20px Trebuchet MS";
-      ctx.fillText("Falsch!", W / 2, 144);
-      ctx.fillStyle = "#ffe08a";
-      drawWrapped("💡 " + dash.lastExplain, W / 2, 182, 630, 48, 16);
-      ctx.textAlign = "left";
-    }
+    roundBlock(W / 2 - 340, 138, 680, 96, "rgba(8,16,40,0.95)");
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#ff8a80"; ctx.font = "bold 22px Trebuchet MS";
+    ctx.fillText(dash.lastExplain ? "Falsch!" : "Crash!", W / 2, 166);
+    if (dash.lastExplain) { ctx.fillStyle = "#ffe08a"; drawWrapped("💡 " + dash.lastExplain, W / 2, 194, 640, 38, 16); }
+    ctx.fillStyle = "#9fd0ff"; ctx.font = "bold 15px Trebuchet MS";
+    ctx.fillText("▶ Springen / Klicken zum Neustart", W / 2, 224);
+    ctx.textAlign = "left";
     return;
   }
 
