@@ -60,6 +60,7 @@ let session = null;                 // aktuelles Level
 let stage = null;                   // aktuelle Plattform-Anordnung (Obby)
 let feedback = null;
 let animTime = 0;
+let obbyDead = false, obbyExplain = "", obbyNeedRelease = false;  // Crash-Pause im Obby
 
 // ---- Cube Dash (Geometry-Dash-Modus) ----
 let dash = null;
@@ -255,6 +256,7 @@ function buildStage(question) {
 
   player.spawnX = checkpoint.x + checkpoint.w / 2 - player.w / 2;
   player.spawnY = checkpoint.y - player.h;
+  obbyDead = false; obbyNeedRelease = false;
   respawn();
 }
 
@@ -284,6 +286,15 @@ function update() {
   if (gameMode === "dash") { updateDash(); return; }
   if (gameMode === "wave") { updateWave(); return; }
   if (!stage) return;
+
+  // Nach falscher Antwort: Pause mit Erklärung – weiter erst per Sprung/Klick
+  if (obbyDead) {
+    player.vy += GRAVITY; player.y += player.vy;
+    if (player.y > LAVA_Y) { player.y = LAVA_Y; player.vy = 0; }
+    if (!keys.jump) obbyNeedRelease = false;
+    if (!obbyNeedRelease && keys.jump) buildStage(session.queue[0]);
+    return;
+  }
 
   if (player.locked) {
     player.vx = 0;
@@ -368,7 +379,7 @@ function onLand(p) {
     player.face = "ouch";
     player.vx = 0; player.vy = -4;
     player.locked = true;
-    showFeedback("Falsch! Kommt später nochmal …", "#ff5252", stage.q.explain);
+    obbyDead = true; obbyNeedRelease = true; obbyExplain = stage.q.explain || "";
   }
 }
 
@@ -899,18 +910,22 @@ function draw() {
     for (const a of stage.answers) drawAnswer(a);
     drawPlayer();
     drawHud();
-    if (feedback) {
+    if (obbyDead) {
+      roundBlock(W / 2 - 340, 118, 680, 104, "rgba(20,24,36,0.95)");
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ff5252"; ctx.font = "bold 26px Trebuchet MS";
+      ctx.fillText("Falsch!", W / 2, 150);
+      if (obbyExplain) { ctx.fillStyle = "#ffe08a"; drawWrapped("💡 " + obbyExplain, W / 2, 178, 640, 38, 16); }
+      ctx.fillStyle = "#9fd0ff"; ctx.font = "bold 15px Trebuchet MS";
+      ctx.fillText("▶ Springen / Klicken zum Weitermachen", W / 2, 210);
+      ctx.textAlign = "left";
+    } else if (feedback) {
       ctx.font = "bold 30px Trebuchet MS";
       ctx.textAlign = "center";
       ctx.lineWidth = 5; ctx.strokeStyle = "rgba(0,0,0,0.5)";
       ctx.strokeText(feedback.text, W / 2, 128);
       ctx.fillStyle = feedback.color;
       ctx.fillText(feedback.text, W / 2, 128);
-      if (feedback.explain) {
-        roundBlock(W / 2 - 330, 144, 660, 52, "rgba(20,24,36,0.88)");
-        ctx.fillStyle = "#ffe08a";
-        drawWrapped("💡 " + feedback.explain, W / 2, 170, 630, 44, 16);
-      }
       ctx.textAlign = "left";
     }
   }
