@@ -60,7 +60,7 @@ let session = null;                 // aktuelles Level
 let stage = null;                   // aktuelle Plattform-Anordnung (Obby)
 let feedback = null;
 let animTime = 0;
-let obbyDead = false, obbyExplain = "", obbyNeedRelease = false;  // Crash-Pause im Obby
+let obbyDead = false, obbyExplain = "", obbyNeedRelease = false, obbyDeadT = 0;  // Crash-Pause im Obby
 
 // ---- Cube Dash (Geometry-Dash-Modus) ----
 let dash = null;
@@ -290,10 +290,11 @@ function update() {
 
   // Nach falscher Antwort: Pause mit Erklärung – weiter erst per Sprung/Klick
   if (obbyDead) {
+    obbyDeadT++;
     player.vy += GRAVITY; player.y += player.vy;
     if (player.y > LAVA_Y) { player.y = LAVA_Y; player.vy = 0; }
-    if (!keys.jump) obbyNeedRelease = false;
-    if (!obbyNeedRelease && keys.jump) buildStage(session.queue[0]);
+    if (!keys.jump) obbyNeedRelease = false;                 // erst loslassen …
+    if (obbyDeadT > 18 && !obbyNeedRelease && keys.jump) buildStage(session.queue[0]);  // … dann weiter
     return;
   }
 
@@ -380,7 +381,7 @@ function onLand(p) {
     player.face = "ouch";
     player.vx = 0; player.vy = -4;
     player.locked = true;
-    obbyDead = true; obbyNeedRelease = true; obbyExplain = stage.q.explain || "";
+    obbyDead = true; obbyNeedRelease = true; obbyDeadT = 0; obbyExplain = stage.q.explain || "";
   }
 }
 
