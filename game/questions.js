@@ -712,6 +712,397 @@ addWortartenList([
 ].forEach(([q, o, c]) => addQ("Konjunktiv", q, o, c, "recognize", "Indirekte Rede → Konjunktiv I."));
 
 /* =====================================================================
+   ERWEITERUNG 2 – weiterer großer Ausbau (Richtung ~10x)
+   Schwerpunkte: Rechtschreibung, Kommasetzung, Fälle, Umstellung
+   ===================================================================== */
+
+// --- das/dass (30 weitere) ---
+[
+  ["Ich glaube, ___ er schläft.", "dass"], ["Das Zelt, ___ wir aufbauen, ist grün.", "das"],
+  ["Sie hofft, ___ es schneit.", "dass"], ["Das Rätsel, ___ ich löse, ist schwer.", "das"],
+  ["Wir bemerken, ___ etwas nicht stimmt.", "dass"], ["Das Boot, ___ schwankt, kentert fast.", "das"],
+  ["Ich bin traurig, ___ du gehst.", "dass"], ["Das Paket, ___ ankam, war schwer.", "das"],
+  ["Er hofft, ___ sie zuhört.", "dass"], ["Das Lied, ___ sie summt, ist fröhlich.", "das"],
+  ["Wir wünschen, ___ alle mitmachen.", "dass"], ["Das Spiel, ___ endete, war fair.", "das"],
+  ["Ich spüre, ___ es kälter wird.", "dass"], ["Das Schiff, ___ ausläuft, ist riesig.", "das"],
+  ["Sie weiß genau, ___ sie es kann.", "dass"], ["Das Brötchen, ___ knusprig ist, schmeckt.", "das"],
+  ["Ich bezweifle, ___ das reicht.", "dass"], ["Das Auto, ___ blinkt, biegt ab.", "das"],
+  ["Wir hoffen sehr, ___ ihr kommt.", "dass"], ["Das Fenster, ___ klemmt, geht schwer auf.", "das"],
+  ["Er erkennt, ___ er sich irrt.", "dass"], ["Das Plakat, ___ dort hängt, ist bunt.", "das"],
+  ["Ich freue mich, ___ Wochenende ist.", "dass"], ["Das Tier, ___ schnurrt, ist zufrieden.", "das"],
+  ["Sie betont, ___ es wichtig ist.", "dass"], ["Das Glas, ___ zerbrach, war teuer.", "das"],
+  ["Wir glauben fest, ___ wir siegen.", "dass"], ["Das Handy, ___ klingelt, ist meins.", "das"],
+  ["Ich hoffe nur, ___ nichts passiert.", "dass"], ["Das Buch, ___ aufgeschlagen ist, ist alt.", "das"],
+].forEach(([s, a]) => addQ("das/dass", "Lücke füllen:\n„" + s + "“", ["das", "dass"], a === "dass" ? 1 : 0, "mc",
+  a === "dass" ? "Konjunktion → „dass“." : "Artikel/Relativpronomen → „das“ (dieses/welches)."));
+
+// --- s-Laute (weitere Wortpaare) ---
+["grüßen:grüssen", "äußern:äussern", "schmeißen:schmeissen", "ließ:liess", "hieß:hiess",
+ "stieß:stiess", "Buße:Busse", "Muße:Musse", "Spieß:Spiess"].forEach((p) => {
+  const [r, w] = p.split(":"); addQ("s-Laute", "Welche Schreibweise ist richtig?", [r, w], 0, "mc", "Langer Vokal/Doppellaut → „ß“.");
+});
+["Pass:Paß", "Ross:Roß", "schoss:schoß", "Geschoss:Geschoß"].forEach((p) => {
+  const [r, w] = p.split(":"); addQ("s-Laute", "Welche Schreibweise ist richtig?", [r, w], 0, "mc", "Kurzer, betonter Vokal → „ss“.");
+});
+
+// --- Wortarten (40 weitere) ---
+addWortartenList([
+  ["Apfel", "Nomen"], ["Regen", "Nomen"], ["Schnee", "Nomen"], ["Wind", "Nomen"], ["Katze", "Nomen"],
+  ["Maus", "Nomen"], ["Stern", "Nomen"], ["Wolke", "Nomen"], ["Tür", "Nomen"], ["Tasche", "Nomen"],
+  ["trinken", "Verb"], ["schwimmen", "Verb"], ["malen", "Verb"], ["bauen", "Verb"], ["werfen", "Verb"],
+  ["fangen", "Verb"], ["rufen", "Verb"], ["tragen", "Verb"], ["ziehen", "Verb"], ["gewinnen", "Verb"],
+  ["rund", "Adjektiv"], ["breit", "Adjektiv"], ["leer", "Adjektiv"], ["voll", "Adjektiv"], ["frei", "Adjektiv"],
+  ["krank", "Adjektiv"], ["reich", "Adjektiv"], ["arm", "Adjektiv"],
+  ["drinnen", "Adverb"], ["oben", "Adverb"], ["unten", "Adverb"], ["vorne", "Adverb"], ["hinten", "Adverb"], ["nirgends", "Adverb"],
+  ["durch", "Präposition"], ["um", "Präposition"], ["seit", "Präposition"], ["bis", "Präposition"],
+  ["während", "Konjunktion"], ["sobald", "Konjunktion"],
+]);
+
+// --- Nominalisierung (weitere) ---
+[
+  ["Das ___ macht satt.", "Essen", "essen", true], ["Beim ___ verlor er.", "Spielen", "spielen", true],
+  ["Sie liebt das ___.", "Reiten", "reiten", true], ["Das ___ tut gut.", "Ausruhen", "ausruhen", true],
+  ["Beim ___ half jeder.", "Tragen", "tragen", true], ["Etwas ___ lag in der Luft.", "Geheimnisvolles", "geheimnisvolles", true],
+  ["Das ___ fällt schwer.", "Aufgeben", "aufgeben", true], ["Er begann zu ___.", "singen", "Singen", false],
+  ["Sie wagte zu ___.", "springen", "Springen", false], ["Das laute ___ störte.", "Klingeln", "klingeln", true],
+  ["Beim ___ ist Vorsicht nötig.", "Schneiden", "schneiden", true], ["Nichts ___ geschah.", "Schlimmes", "schlimmes", true],
+  ["Das ständige ___ nervt.", "Fragen", "fragen", true], ["Er hat Angst vor dem ___.", "Verlieren", "verlieren", true],
+  ["Ohne zu ___, sprang er.", "überlegen", "Überlegen", false], ["Wir hörten ein ___.", "Rascheln", "rascheln", true],
+  ["Das frühe ___ war hart.", "Aufstehen", "aufstehen", true], ["Sie übt das ___.", "Schreiben", "schreiben", true],
+  ["Es gab viel zu ___.", "tun", "Tun", false], ["Das schnelle ___ ermüdete.", "Rennen", "rennen", true],
+].forEach(([s, c, o, big]) => addQ("Nominalisierung", "Groß oder klein?\n„" + s + "“", [c, o], 0, "mc",
+  big ? "Nominalisierung (Signalwort davor) → groß." : "Verb (oft mit „zu“) → klein."));
+
+// --- Großschreibung (weitere) ---
+[
+  ["Wir reisen nach ___.", "Spanien", "spanien"], ["Der ___ Ozean ist warm.", "Indische", "indische"],
+  ["Mein Hund heißt ___.", "Bello", "bello"], ["Am ___ ist Markt.", "Freitag", "freitag"],
+  ["Sie spricht ___.", "Englisch", "englisch"], ["Im ___ wird es kalt.", "Winter", "winter"],
+  ["Wir feiern ___.", "Weihnachten", "weihnachten"], ["Das ist die ___ Mauer.", "Chinesische", "chinesische"],
+  ["Nur ___ kamen.", "manche", "Manche"], ["Es waren ___ Leute da.", "viele", "Viele"],
+  ["Welches Wort schreibt man groß?", "Vogel", "vogel"], ["Welches Wort schreibt man groß?", "Apfel", "apfel"],
+  ["Er kommt aus ___.", "Frankreich", "frankreich"], ["Liebe Mia, ich schreibe ___ bald.", "Dir", "dir"],
+  ["Am ___ schlafen wir lange.", "Wochenende", "wochenende"], ["Der ___ Wald liegt in Bayern.", "Bayerische", "bayerische"],
+  ["Sie isst ein ___.", "Brötchen", "brötchen"], ["Wir sahen den ___.", "Eiffelturm", "eiffelturm"],
+  ["Das ___ Reich war groß.", "Römische", "römische"], ["Wir fahren zum ___.", "Bahnhof", "bahnhof"],
+  ["Ich lese ein ___.", "Buch", "buch"], ["Hallo Herr Ott, können ___ helfen?", "Sie", "sie"],
+].forEach(([s, c, o]) => addQ("Großschreibung", "Wie schreibt man es richtig?\n„" + s + "“", [c, o], 0, "mc"));
+
+// --- Getrennt/Zusammen (weitere) ---
+[
+  ["„zu Hause“ schreibt man …", ["getrennt", "zusammen"], 0], ["„nach Hause“ schreibt man …", ["getrennt", "zusammen"], 0],
+  ["„hinausgehen“ schreibt man …", ["zusammen", "getrennt"], 0], ["„Ski fahren“ schreibt man …", ["getrennt", "zusammen"], 0],
+  ["„heimkommen“ schreibt man …", ["zusammen", "getrennt"], 0], ["„zu viel“ schreibt man …", ["getrennt", "zusammen"], 0],
+  ["„irgendwie“ schreibt man …", ["zusammen", "getrennt"], 0], ["„nebeneinander“ schreibt man …", ["zusammen", "getrennt"], 0],
+  ["„abnehmen“ schreibt man …", ["zusammen", "getrennt"], 0], ["„hin und her“ schreibt man …", ["getrennt", "zusammen"], 0],
+  ["„dazugehören“ schreibt man …", ["zusammen", "getrennt"], 0], ["„auswendig lernen“ schreibt man …", ["getrennt", "zusammen"], 0],
+  ["„weitermachen“ schreibt man …", ["zusammen", "getrennt"], 0], ["„auseinandernehmen“ schreibt man …", ["zusammen", "getrennt"], 0],
+  ["„spazieren fahren“ schreibt man …", ["getrennt", "zusammen"], 0], ["„aufstehen“ schreibt man …", ["zusammen", "getrennt"], 0],
+  ["„kennen lernen“ – erlaubt ist …", ["beides", "nur getrennt"], 0], ["„übereinanderlegen“ schreibt man …", ["zusammen", "getrennt"], 0],
+].forEach(([q, o, c]) => addQ("Getrennt/Zusammen", q, o, c, "mc"));
+
+// --- Komma (30 weitere, echte Sätze) ---
+[
+  ["Wir warten bis der Regen aufhört.", "nach „warten“", ["nach „bis“", "kein Komma"], "Komma vor dem Nebensatz mit „bis“."],
+  ["Er weiß dass es stimmt.", "nach „weiß“", ["nach „dass“", "kein Komma"], "Komma vor dem dass-Satz."],
+  ["Das Kind das lacht ist froh.", "nach „Kind“ und „lacht“", ["nur am Ende", "kein Komma"], "Relativsatz beidseitig abtrennen."],
+  ["Ich kaufe Stifte Hefte und Kleber.", "nach „Stifte“", ["vor „und“", "gar nicht"], "Aufzählung, kein Komma vor „und“."],
+  ["Sie ging weg ohne sich umzudrehen.", "nach „weg“", ["nach „ohne“", "kein Komma"], "Infinitivgruppe „ohne … zu“."],
+  ["Wir feiern weil du Geburtstag hast.", "nach „feiern“", ["nach „weil“", "kein Komma"], "Komma vor dem weil-Satz."],
+  ["Tom warte auf mich.", "nach „Tom“", ["kein Komma", "nach „mich“"], "Anrede abtrennen."],
+  ["Wenn ich groß bin werde ich Pilot.", "nach „bin“", ["nach „Wenn“", "kein Komma"], "Vorangestellter Nebensatz → Komma."],
+  ["Ich rufe an doch keiner geht ran.", "vor „doch“", ["nach „doch“", "kein Komma"], "Vor „doch“ steht ein Komma."],
+  ["Er fragt wann der Zug kommt.", "nach „fragt“", ["nach „wann“", "kein Komma"], "Komma vor dem Nebensatz."],
+  ["Bevor du gehst räum auf.", "nach „gehst“", ["nach „Bevor“", "kein Komma"], "Vorangestellter Nebensatz → Komma."],
+  ["Das Haus das wir kauften ist alt.", "nach „Haus“ und „kauften“", ["nur am Ende", "kein Komma"], "Relativsatz beidseitig."],
+  ["Er kam an als es dunkel war.", "nach „an“", ["nach „als“", "kein Komma"], "Komma vor dem als-Satz."],
+  ["Sie lacht obwohl sie traurig ist.", "nach „lacht“", ["nach „obwohl“", "kein Komma"], "Komma vor dem obwohl-Satz."],
+  ["Ich weiß nicht ob er kommt.", "nach „nicht“", ["nach „ob“", "kein Komma"], "Komma vor dem ob-Satz."],
+  ["Das Auto das rot ist gehört mir.", "nach „Auto“ und „ist“", ["nur am Ende", "kein Komma"], "Relativsatz beidseitig."],
+  ["Wir bleiben hier weil es regnet.", "nach „hier“", ["nach „weil“", "kein Komma"], "Komma vor dem weil-Satz."],
+  ["Liebe Frau Klein ich danke Ihnen.", "nach „Klein“", ["kein Komma", "nach „Ihnen“"], "Briefanrede abtrennen."],
+  ["Er übt damit er besser wird.", "nach „übt“", ["nach „damit“", "kein Komma"], "Komma vor dem damit-Satz."],
+  ["Sobald es klingelt gehen wir.", "nach „klingelt“", ["nach „Sobald“", "kein Komma"], "Vorangestellter Nebensatz → Komma."],
+  ["Ich mag Sommer aber ich hasse Hitze.", "vor „aber“", ["nach „aber“", "kein Komma"], "Vor „aber“ steht ein Komma."],
+  ["Die Frau die dort steht winkt.", "nach „Frau“ und „steht“", ["nur am Ende", "kein Komma"], "Relativsatz beidseitig."],
+  ["Wir essen während der Film läuft.", "nach „essen“", ["nach „während“", "kein Komma"], "Komma vor dem Nebensatz."],
+  ["Er rannte los um den Bus zu erreichen.", "nach „los“", ["nach „um“", "kein Komma"], "Infinitivgruppe „um … zu“."],
+  ["Ich glaube er hat recht.", "nach „glaube“", ["kein Komma", "nach „hat“"], "Komma zwischen Haupt- und Nebensatz."],
+  ["Sag mir was du willst.", "nach „mir“", ["nach „was“", "kein Komma"], "Komma vor dem Nebensatz."],
+  ["Nachdem wir aßen spielten wir.", "nach „aßen“", ["nach „Nachdem“", "kein Komma"], "Vorangestellter Nebensatz → Komma."],
+  ["Ich nehme Apfel Birne und Pflaume mit.", "nach „Apfel“", ["vor „und“", "gar nicht"], "Aufzählung, kein Komma vor „und“."],
+  ["Komm her und hilf mir.", "kein Komma", ["vor „und“", "nach „her“"], "Zwischen kurzen Hauptsätzen mit „und“ meist kein Komma."],
+  ["Wir packten ein als es hell wurde.", "nach „ein“", ["nach „als“", "kein Komma"], "Komma vor dem als-Satz."],
+].forEach(([s, c, d, ex]) => addQ("Komma", "Wo steht das Komma?\n„" + s + "“", [c].concat(d), 0, "comma", ex));
+
+// --- Artikel (weitere) ---
+[
+  ["Der Wind weht.", "Der", "bestimmt"], ["Ein Stern fällt.", "Ein", "unbestimmt"],
+  ["Die Uhr tickt.", "Die", "bestimmt"], ["Eine Wolke zieht vorbei.", "Eine", "unbestimmt"],
+  ["Ich brauche eine Schere.", "eine", "unbestimmt"], ["Wir öffnen das Tor.", "das", "bestimmt"],
+  ["Er hat einen Plan.", "einen", "unbestimmt"], ["Die Gäste kommen.", "Die", "bestimmt"],
+  ["Da liegt ein Brief.", "ein", "unbestimmt"], ["Der Zug fährt ab.", "Der", "bestimmt"],
+  ["Sie malt ein Herz.", "ein", "unbestimmt"], ["Das Spiel beginnt.", "Das", "bestimmt"],
+  ["Ich sehe eine Eule.", "eine", "unbestimmt"], ["Die Brücke ist lang.", "Die", "bestimmt"],
+  ["Ein Junge winkt.", "Ein", "unbestimmt"], ["Wir loben den Helfer.", "den", "bestimmt"],
+  ["Er kauft einen Ball.", "einen", "unbestimmt"], ["Die Lehrerin lacht.", "Die", "bestimmt"],
+  ["Auf dem Baum sitzt eine Krähe.", "eine", "unbestimmt"], ["Das Boot schwimmt.", "Das", "bestimmt"],
+].forEach(([s, art, kind]) => {
+  const opts = kind === "bestimmt" ? ["bestimmter Artikel", "unbestimmter Artikel"] : ["unbestimmter Artikel", "bestimmter Artikel"];
+  addQ("Artikel", "Bestimmt oder unbestimmt? – Artikel „" + art + "“\n„" + s + "“", opts, 0, "recognize",
+    kind === "bestimmt" ? "der/die/das = bestimmt." : "ein/eine/einen = unbestimmt.");
+});
+
+// --- Pronomen (weitere) ---
+[
+  ["Er ruft uns.", "uns", "Personalpronomen", ["Possessivpronomen"]],
+  ["Das ist euer Ball.", "euer", "Possessivpronomen", ["Personalpronomen"]],
+  ["Diese Tasche ist neu.", "Diese", "Demonstrativpronomen", ["Artikel"]],
+  ["Der Junge, der rennt, gewinnt.", "der (2.)", "Relativpronomen", ["Artikel"]],
+  ["Ich höre dich.", "dich", "Personalpronomen", ["Possessivpronomen"]],
+  ["Sein Hund bellt.", "Sein", "Possessivpronomen", ["Personalpronomen"]],
+  ["Wir danken ihnen.", "ihnen", "Personalpronomen", ["Relativpronomen"]],
+  ["Das Buch, das hier liegt, ist neu.", "das (2.)", "Relativpronomen", ["Artikel"]],
+  ["Ihre Katze schläft.", "Ihre", "Possessivpronomen", ["Demonstrativpronomen"]],
+  ["Jener Mann winkt.", "Jener", "Demonstrativpronomen", ["Artikel"]],
+  ["Die Schüler, die lernen, bestehen.", "die (2.)", "Relativpronomen", ["Artikel"]],
+  ["Unser Haus ist groß.", "Unser", "Possessivpronomen", ["Personalpronomen"]],
+].forEach(([s, t, l, d]) => recSentence("Pronomen", s, l, d, "Welche Art ist „" + t + "“?"));
+addQ("Pronomen", "„uns, euch, ihnen“ sind …", ["Personalpronomen", "Possessivpronomen"], 0, "mc");
+addQ("Pronomen", "„unser, euer, ihr“ sind …", ["Possessivpronomen", "Personalpronomen"], 0, "mc");
+
+// --- Fälle (35 weitere, echte Sätze) ---
+[
+  ["Die Lampe brennt.", "Die Lampe", "Nominativ", ["Akkusativ", "Dativ"]],
+  ["Ich esse den Kuchen.", "den Kuchen", "Akkusativ", ["Nominativ", "Dativ"]],
+  ["Er schenkt der Frau Blumen.", "der Frau", "Dativ", ["Akkusativ", "Genitiv"]],
+  ["Das Auto des Nachbarn ist neu.", "des Nachbarn", "Genitiv", ["Dativ", "Akkusativ"]],
+  ["Der Wind weht stark.", "Der Wind", "Nominativ", ["Dativ", "Akkusativ"]],
+  ["Wir bauen ein Haus.", "ein Haus", "Akkusativ", ["Nominativ", "Dativ"]],
+  ["Sie hilft dem Bruder.", "dem Bruder", "Dativ", ["Akkusativ", "Nominativ"]],
+  ["Die Tasche der Lehrerin ist schwer.", "der Lehrerin", "Genitiv", ["Dativ", "Nominativ"]],
+  ["Das Telefon klingelt.", "Das Telefon", "Nominativ", ["Akkusativ", "Genitiv"]],
+  ["Er liest die Zeitung.", "die Zeitung", "Akkusativ", ["Dativ", "Nominativ"]],
+  ["Ich glaube dem Zeugen.", "dem Zeugen", "Dativ", ["Akkusativ", "Nominativ"]],
+  ["Der Hut des Clowns ist bunt.", "des Clowns", "Genitiv", ["Dativ", "Akkusativ"]],
+  ["Die Kinder spielen draußen.", "Die Kinder", "Nominativ", ["Dativ", "Akkusativ"]],
+  ["Sie kauft einen Mantel.", "einen Mantel", "Akkusativ", ["Nominativ", "Dativ"]],
+  ["Wir antworten der Frau.", "der Frau", "Dativ", ["Akkusativ", "Genitiv"]],
+  ["Das Ende des Films war traurig.", "des Films", "Genitiv", ["Dativ", "Nominativ"]],
+  ["Der Lehrer spricht laut.", "Der Lehrer", "Nominativ", ["Akkusativ", "Dativ"]],
+  ["Ich öffne das Geschenk.", "das Geschenk", "Akkusativ", ["Dativ", "Nominativ"]],
+  ["Er folgt dem Weg.", "dem Weg", "Dativ", ["Akkusativ", "Genitiv"]],
+  ["Die Farbe der Wand gefällt mir.", "der Wand", "Genitiv", ["Dativ", "Akkusativ"]],
+  ["Das Pferd frisst Heu.", "Das Pferd", "Nominativ", ["Akkusativ", "Genitiv"]],
+  ["Sie trägt eine Brille.", "eine Brille", "Akkusativ", ["Dativ", "Nominativ"]],
+  ["Wir gratulieren den Gewinnern.", "den Gewinnern", "Dativ", ["Akkusativ", "Nominativ"]],
+  ["Der Schwanz des Hundes wedelt.", "des Hundes", "Genitiv", ["Dativ", "Akkusativ"]],
+  ["Der Ball rollt weg.", "Der Ball", "Nominativ", ["Akkusativ", "Dativ"]],
+  ["Ich male einen Stern.", "einen Stern", "Akkusativ", ["Nominativ", "Dativ"]],
+  ["Sie dankt dem Arzt.", "dem Arzt", "Dativ", ["Akkusativ", "Genitiv"]],
+  ["Die Tür des Autos klemmt.", "des Autos", "Genitiv", ["Dativ", "Akkusativ"]],
+  ["Die Sonne scheint hell.", "Die Sonne", "Nominativ", ["Akkusativ", "Genitiv"]],
+  ["Er isst eine Banane.", "eine Banane", "Akkusativ", ["Dativ", "Nominativ"]],
+  ["Wir helfen den Nachbarn.", "den Nachbarn", "Dativ", ["Akkusativ", "Nominativ"]],
+  ["Das Dach des Turms ist spitz.", "des Turms", "Genitiv", ["Dativ", "Akkusativ"]],
+  ["Der Junge schläft tief.", "Der Junge", "Nominativ", ["Akkusativ", "Dativ"]],
+  ["Sie schreibt einen Brief.", "einen Brief", "Akkusativ", ["Nominativ", "Dativ"]],
+  ["Ich vertraue dem Freund.", "dem Freund", "Dativ", ["Akkusativ", "Genitiv"]],
+].forEach(([s, p, k, d]) => recSentence("Fälle", s, k, d, "In welchem Fall steht „" + p + "“?",
+  "Nominativ=Wer/Was? · Akkusativ=Wen/Was? · Dativ=Wem? · Genitiv=Wessen?"));
+
+// --- Satzglieder (weitere) ---
+[
+  ["Der Hund jagt die Katze.", "Der Hund", "Subjekt", ["Prädikat", "Objekt"]],
+  ["Der Hund jagt die Katze.", "die Katze", "Akkusativobjekt", ["Subjekt", "Dativobjekt"]],
+  ["Die Sängerin singt schön.", "Die Sängerin", "Subjekt", ["Objekt", "Prädikat"]],
+  ["Ich gebe dem Hund Futter.", "dem Hund", "Dativobjekt", ["Akkusativobjekt", "Subjekt"]],
+  ["Der Zug fährt ab.", "fährt ab", "Prädikat", ["Subjekt", "Objekt"]],
+  ["Wir hoffen auf Sonne.", "auf Sonne", "Präpositionalobjekt", ["Subjekt", "Adverbiale"]],
+  ["Das Mädchen malt ein Pferd.", "ein Pferd", "Akkusativobjekt", ["Subjekt", "Dativobjekt"]],
+  ["Der Schüler antwortet dem Lehrer.", "dem Lehrer", "Dativobjekt", ["Akkusativobjekt", "Subjekt"]],
+  ["Meine Schwester kocht Suppe.", "Meine Schwester", "Subjekt", ["Objekt", "Prädikat"]],
+  ["Die Blume welkt langsam.", "welkt", "Prädikat", ["Subjekt", "Objekt"]],
+  ["Der Bäcker backt Brot.", "Brot", "Akkusativobjekt", ["Subjekt", "Dativobjekt"]],
+  ["Wir warten auf den Lehrer.", "auf den Lehrer", "Präpositionalobjekt", ["Subjekt", "Adverbiale"]],
+  ["Der Vogel fliegt davon.", "Der Vogel", "Subjekt", ["Objekt", "Prädikat"]],
+  ["Sie reicht der Oma den Arm.", "der Oma", "Dativobjekt", ["Akkusativobjekt", "Subjekt"]],
+  ["Der Ball trifft das Tor.", "das Tor", "Akkusativobjekt", ["Subjekt", "Dativobjekt"]],
+  ["Mein Vater liest viel.", "Mein Vater", "Subjekt", ["Objekt", "Prädikat"]],
+  ["Der Lehrer erklärt den Schülern die Regel.", "den Schülern", "Dativobjekt", ["Akkusativobjekt", "Subjekt"]],
+  ["Das Kind fürchtet sich vor dem Hund.", "vor dem Hund", "Präpositionalobjekt", ["Subjekt", "Adverbiale"]],
+  ["Die Katze schnurrt leise.", "schnurrt", "Prädikat", ["Subjekt", "Objekt"]],
+  ["Der Gärtner pflanzt Blumen.", "Blumen", "Akkusativobjekt", ["Subjekt", "Dativobjekt"]],
+  ["Er dankt seinem Freund.", "seinem Freund", "Dativobjekt", ["Akkusativobjekt", "Subjekt"]],
+  ["Wir denken an die Reise.", "an die Reise", "Präpositionalobjekt", ["Subjekt", "Adverbiale"]],
+  ["Die Maus frisst den Käse.", "den Käse", "Akkusativobjekt", ["Subjekt", "Dativobjekt"]],
+  ["Der Wecker klingelt früh.", "klingelt", "Prädikat", ["Subjekt", "Objekt"]],
+  ["Die Sonne blendet die Fahrer.", "Die Sonne", "Subjekt", ["Objekt", "Prädikat"]],
+].forEach(([s, p, l, d]) => recSentence("Satzglieder", s, l, d, "Was ist „" + p + "“?"));
+
+// --- Adverbiale (30 weitere) ---
+[
+  ["Am Abend lesen wir.", "Am Abend", "temporal", ["lokal", "modal"]],
+  ["Im Keller ist es kühl.", "Im Keller", "lokal", ["temporal", "kausal"]],
+  ["Er arbeitet flink.", "flink", "modal", ["temporal", "lokal"]],
+  ["Wegen der Krankheit fehlt er.", "Wegen der Krankheit", "kausal", ["temporal", "modal"]],
+  ["Nächste Woche fahren wir weg.", "Nächste Woche", "temporal", ["lokal", "modal"]],
+  ["Auf dem Berg liegt Schnee.", "Auf dem Berg", "lokal", ["temporal", "kausal"]],
+  ["Sie tanzt anmutig.", "anmutig", "modal", ["temporal", "lokal"]],
+  ["Vor Schreck schrie er.", "Vor Schreck", "kausal", ["modal", "temporal"]],
+  ["Am Mittag essen wir warm.", "Am Mittag", "temporal", ["lokal", "modal"]],
+  ["Neben der Schule ist ein Park.", "Neben der Schule", "lokal", ["temporal", "kausal"]],
+  ["Er packt hastig.", "hastig", "modal", ["temporal", "lokal"]],
+  ["Wegen des Staus kamen wir spät.", "Wegen des Staus", "kausal", ["temporal", "modal"]],
+  ["Jeden Morgen jogge ich.", "Jeden Morgen", "temporal", ["lokal", "modal"]],
+  ["In der Höhle ist es dunkel.", "In der Höhle", "lokal", ["temporal", "kausal"]],
+  ["Sie grüßte höflich.", "höflich", "modal", ["temporal", "kausal"]],
+  ["Aus Wut warf er den Stift.", "Aus Wut", "kausal", ["modal", "lokal"]],
+  ["Letzten Sommer waren wir am Meer.", "Letzten Sommer", "temporal", ["lokal", "modal"]],
+  ["Zwischen den Häusern weht Wind.", "Zwischen den Häusern", "lokal", ["temporal", "kausal"]],
+  ["Er antwortete zögernd.", "zögernd", "modal", ["temporal", "lokal"]],
+  ["Vor Kälte zitterten sie.", "Vor Kälte", "kausal", ["modal", "temporal"]],
+  ["Um Mitternacht schlägt die Uhr.", "Um Mitternacht", "temporal", ["lokal", "modal"]],
+  ["Am Fluss sitzen Angler.", "Am Fluss", "lokal", ["temporal", "kausal"]],
+  ["Sie lief eilig davon.", "eilig", "modal", ["temporal", "lokal"]],
+  ["Wegen des Lärms zog er aus.", "Wegen des Lärms", "kausal", ["temporal", "modal"]],
+  ["Am Nachmittag regnete es.", "Am Nachmittag", "temporal", ["lokal", "modal"]],
+  ["Unter der Brücke nisten Tauben.", "Unter der Brücke", "lokal", ["temporal", "kausal"]],
+  ["Er erklärte es deutlich.", "deutlich", "modal", ["temporal", "kausal"]],
+  ["Vor Aufregung stotterte sie.", "Vor Aufregung", "kausal", ["modal", "temporal"]],
+  ["Heute Nacht gab es Sturm.", "Heute Nacht", "temporal", ["lokal", "modal"]],
+  ["Im Wald singen Vögel.", "Im Wald", "lokal", ["temporal", "kausal"]],
+].forEach(([s, p, l, d]) => recSentence("Adverbiale", s, l, d, "Welche adverbiale Bestimmung ist „" + p + "“?",
+  "temporal=Wann? · lokal=Wo/Wohin? · modal=Wie? · kausal=Warum?"));
+
+// --- Attribute (weitere) ---
+[
+  ["der kluge Schüler", "kluge", "vorangestelltes Attribut", ["Subjekt", "Prädikat"]],
+  ["das Auto des Lehrers", "des Lehrers", "nachgestelltes Attribut", ["Subjekt", "Objekt"]],
+  ["die Frau mit der Brille", "mit der Brille", "Präpositionalattribut", ["Adverbiale", "Subjekt"]],
+  ["der Hund, der bellt", "der bellt", "Attributsatz", ["Hauptsatz", "Adverbiale"]],
+  ["ein hohes Haus", "hohes", "vorangestelltes Attribut", ["Objekt", "Prädikat"]],
+  ["der Garten des Nachbarn", "des Nachbarn", "nachgestelltes Attribut", ["Subjekt", "Adverbiale"]],
+  ["das Kind im roten Mantel", "im roten Mantel", "Präpositionalattribut", ["Adverbiale", "Subjekt"]],
+  ["die Stadt, die ich liebe", "die ich liebe", "Attributsatz", ["Hauptsatz", "Adverbiale"]],
+  ["eine alte Uhr", "alte", "vorangestelltes Attribut", ["Objekt", "Prädikat"]],
+  ["das Dach des Hauses", "des Hauses", "nachgestelltes Attribut", ["Subjekt", "Adverbiale"]],
+  ["der Mann aus Berlin", "aus Berlin", "Präpositionalattribut", ["Adverbiale", "Subjekt"]],
+  ["der Film, den wir sahen", "den wir sahen", "Attributsatz", ["Hauptsatz", "Adverbiale"]],
+  ["ein schneller Wagen", "schneller", "vorangestelltes Attribut", ["Objekt", "Prädikat"]],
+  ["die Tasche meiner Mutter", "meiner Mutter", "nachgestelltes Attribut", ["Subjekt", "Objekt"]],
+  ["der Junge, der lacht", "der lacht", "Attributsatz", ["Hauptsatz", "Adverbiale"]],
+  ["ein bunter Drachen", "bunter", "vorangestelltes Attribut", ["Objekt", "Prädikat"]],
+  ["die Brille des Opas", "des Opas", "nachgestelltes Attribut", ["Subjekt", "Adverbiale"]],
+  ["das Lied, das sie singt", "das sie singt", "Attributsatz", ["Hauptsatz", "Adverbiale"]],
+].forEach(([phrase, t, l, d]) => recSentence("Attribute", phrase, l, d, "Was ist „" + t + "“?"));
+
+// --- Zeitformen (25 weitere Verbformen) ---
+[
+  ["ich lerne", "Präsens"], ["ich lernte", "Präteritum"], ["ich habe gelernt", "Perfekt"],
+  ["ich hatte gelernt", "Plusquamperfekt"], ["ich werde lernen", "Futur I"],
+  ["du fährst", "Präsens"], ["du fuhrst", "Präteritum"], ["du bist gefahren", "Perfekt"],
+  ["du warst gefahren", "Plusquamperfekt"], ["du wirst fahren", "Futur I"],
+  ["sie kauft", "Präsens"], ["sie kaufte", "Präteritum"], ["sie hat gekauft", "Perfekt"],
+  ["sie hatte gekauft", "Plusquamperfekt"], ["sie wird kaufen", "Futur I"],
+  ["wir bleiben", "Präsens"], ["wir blieben", "Präteritum"], ["wir sind geblieben", "Perfekt"],
+  ["wir waren geblieben", "Plusquamperfekt"], ["wir werden bleiben", "Futur I"],
+  ["er trinkt", "Präsens"], ["er trank", "Präteritum"], ["er hat getrunken", "Perfekt"],
+  ["er hatte getrunken", "Plusquamperfekt"], ["er wird trinken", "Futur I"],
+].forEach(([form, t]) => addQ("Zeitformen", "In welcher Zeitform steht „" + form + "“?", TEMPUS_OPTS[t], 0, "recognize",
+  "Plusquamperfekt=hatte/war+Partizip · Perfekt=habe/bin+Partizip · Futur I=werden+Infinitiv."));
+
+// --- Aktiv/Passiv (weitere) ---
+[
+  ["Das Brot wird gebacken.", "Passiv", ["Aktiv"]], ["Der Bäcker backt das Brot.", "Aktiv", ["Passiv"]],
+  ["Die Tür wurde geschlossen.", "Passiv", ["Aktiv"]], ["Die Kinder bauen eine Burg.", "Aktiv", ["Passiv"]],
+  ["Das Auto wird gewaschen.", "Passiv", ["Aktiv"]], ["Der Hund frisst den Knochen.", "Aktiv", ["Passiv"]],
+  ["Der Brief wird gelesen.", "Passiv", ["Aktiv"]], ["Sie pflückt Blumen.", "Aktiv", ["Passiv"]],
+  ["Das Lied wird gespielt.", "Passiv", ["Aktiv"]], ["Wir essen den Kuchen.", "Aktiv", ["Passiv"]],
+  ["Die Aufgabe wird gelöst.", "Passiv", ["Aktiv"]], ["Der Maler streicht die Wand.", "Aktiv", ["Passiv"]],
+].forEach(([s, l, d]) => recSentence("Aktiv/Passiv", s, l, d, "Aktiv oder Passiv?"));
+addQ("Aktiv/Passiv", "Passiv von „Der Junge wirft den Ball.“", ["Der Ball wird geworfen.", "Der Ball wirft."], 0, "transform");
+addQ("Aktiv/Passiv", "Passiv von „Der Koch kocht die Suppe.“", ["Die Suppe wird gekocht.", "Die Suppe kocht."], 0, "transform");
+addQ("Aktiv/Passiv", "Im Passiv ist der Täter oft …", ["unwichtig/unbekannt", "das Subjekt"], 0, "mc");
+addQ("Aktiv/Passiv", "Im Aktiv steht der Handelnde …", ["im Mittelpunkt", "im Hintergrund"], 0, "mc");
+
+// --- Satzarten (weitere) ---
+[
+  ["Ich male, und sie singt.", "Satzreihe", ["Satzgefüge"]],
+  ["Weil es spät ist, gehen wir.", "Satzgefüge", ["Satzreihe"]],
+  ["Er kommt, oder er ruft an.", "Satzreihe", ["Satzgefüge"]],
+  ["Als der Film begann, wurde es still.", "Satzgefüge", ["Satzreihe"]],
+  ["Sie lacht, denn es ist lustig.", "Satzreihe", ["Satzgefüge"]],
+  ["Obwohl es regnet, spielen wir.", "Satzgefüge", ["Satzreihe"]],
+  ["Du gehst, ich bleibe.", "Satzreihe", ["Satzgefüge"]],
+  ["Wenn du rufst, komme ich.", "Satzgefüge", ["Satzreihe"]],
+  ["Wir essen, und dann spielen wir.", "Satzreihe", ["Satzgefüge"]],
+  ["Damit es klappt, üben wir.", "Satzgefüge", ["Satzreihe"]],
+  ["Er rennt, sie folgt.", "Satzreihe", ["Satzgefüge"]],
+  ["Nachdem es klingelte, gingen wir.", "Satzgefüge", ["Satzreihe"]],
+].forEach(([s, l, d]) => recSentence("Satzarten", s, l, d, "Satzreihe oder Satzgefüge?",
+  "Satzreihe = zwei Hauptsätze · Satzgefüge = Hauptsatz + Nebensatz."));
+addQ("Satzarten", "Ein Hauptsatz kann …", ["allein stehen", "nicht allein stehen"], 0, "mc");
+addQ("Satzarten", "Ein Nebensatz kann …", ["nicht allein stehen", "allein stehen"], 0, "mc");
+addQ("Satzarten", "„denn“ verbindet …", ["zwei Hauptsätze", "Haupt- und Nebensatz"], 0, "mc");
+addQ("Satzarten", "„weil“ leitet einen … ein.", ["Nebensatz", "Hauptsatz"], 0, "mc");
+
+// --- Umstellung (30 weitere) ---
+[
+  ["Es schneit. Die Kinder freuen sich.", "Weil es schneit, freuen sich die Kinder.", "Es schneit, die Kinder freuen sich."],
+  ["Ich bin satt. Ich höre auf.", "Weil ich satt bin, höre ich auf.", "Ich bin satt, ich höre auf."],
+  ["Der Film war aus. Wir gingen heim.", "Als der Film aus war, gingen wir heim.", "Der Film war aus, wir gingen heim."],
+  ["Du rufst an. Ich freue mich.", "Wenn du anrufst, freue ich mich.", "Du rufst an, ich freue mich."],
+  ["Sie hatte Durst. Sie trank Wasser.", "Weil sie Durst hatte, trank sie Wasser.", "Sie hatte Durst, sie trank Wasser."],
+  ["Es klingelte. Wir standen auf.", "Als es klingelte, standen wir auf.", "Es klingelte, wir standen auf."],
+  ["Ich übe täglich. Ich werde besser.", "Weil ich täglich übe, werde ich besser.", "Ich übe täglich, ich werde besser."],
+  ["Es ist kalt. Wir heizen.", "Weil es kalt ist, heizen wir.", "Es ist kalt, wir heizen."],
+  ["Der Wecker klingelte. Sie wachte auf.", "Als der Wecker klingelte, wachte sie auf.", "Der Wecker klingelte, sie wachte auf."],
+  ["Du hilfst. Es geht schneller.", "Wenn du hilfst, geht es schneller.", "Du hilfst, es geht schneller."],
+  ["Er war krank. Er ging zum Arzt.", "Weil er krank war, ging er zum Arzt.", "Er war krank, er ging zum Arzt."],
+  ["Es wurde laut. Der Hund bellte.", "Als es laut wurde, bellte der Hund.", "Es wurde laut, der Hund bellte."],
+  ["Wir hatten Zeit. Wir spielten.", "Weil wir Zeit hatten, spielten wir.", "Wir hatten Zeit, wir spielten."],
+  ["Es regnet stark. Die Straße ist nass.", "Weil es stark regnet, ist die Straße nass.", "Es regnet stark, die Straße ist nass."],
+  ["Du bist müde. Du sollst schlafen.", "Wenn du müde bist, sollst du schlafen.", "Du bist müde, du sollst schlafen."],
+  ["Sie lernte viel. Sie bestand.", "Weil sie viel lernte, bestand sie.", "Sie lernte viel, sie bestand."],
+  ["Die Ampel war rot. Wir hielten an.", "Weil die Ampel rot war, hielten wir an.", "Die Ampel war rot, wir hielten an."],
+  ["Es wurde dunkel. Die Lichter gingen an.", "Als es dunkel wurde, gingen die Lichter an.", "Es wurde dunkel, die Lichter gingen an."],
+  ["Ich habe frei. Ich besuche dich.", "Wenn ich frei habe, besuche ich dich.", "Ich habe frei, ich besuche dich."],
+  ["Der Bus war voll. Wir mussten stehen.", "Weil der Bus voll war, mussten wir stehen.", "Der Bus war voll, wir mussten stehen."],
+  ["Es donnerte. Das Kind erschrak.", "Als es donnerte, erschrak das Kind.", "Es donnerte, das Kind erschrak."],
+  ["Wir sparten. Wir fuhren in den Urlaub.", "Weil wir sparten, fuhren wir in den Urlaub.", "Wir sparten, wir fuhren in den Urlaub."],
+  ["Du übst Klavier. Du wirst gut.", "Wenn du Klavier übst, wirst du gut.", "Du übst Klavier, du wirst gut."],
+  ["Es war heiß. Wir gingen schwimmen.", "Weil es heiß war, gingen wir schwimmen.", "Es war heiß, wir gingen schwimmen."],
+  ["Die Glocke läutete. Alle verstummten.", "Als die Glocke läutete, verstummten alle.", "Die Glocke läutete, alle verstummten."],
+  ["Ich bin fertig. Ich gehe raus.", "Wenn ich fertig bin, gehe ich raus.", "Ich bin fertig, ich gehe raus."],
+  ["Er hatte Angst. Er rannte weg.", "Weil er Angst hatte, rannte er weg.", "Er hatte Angst, er rannte weg."],
+  ["Es schneite. Die Schule fiel aus.", "Weil es schneite, fiel die Schule aus.", "Es schneite, die Schule fiel aus."],
+  ["Der Zug kam. Wir stiegen ein.", "Als der Zug kam, stiegen wir ein.", "Der Zug kam, wir stiegen ein."],
+  ["Du bist leise. Das Baby schläft.", "Wenn du leise bist, schläft das Baby.", "Du bist leise, das Baby schläft."],
+].forEach(([pair, c, w]) => addQ("Umstellung", "Verbinde zu einem Satzgefüge (Haupt- + Nebensatz):\n„" + pair + "“",
+  [c, w], 0, "transform", "Nebensatz mit Konjunktion (weil/als/wenn …), Verb am Ende."));
+
+// --- Konjunktiv (weitere) ---
+[
+  ["„Ich lese gern.“ → Er sagt, er ___ gern.", ["lese", "liest"]],
+  ["„Ich fahre weg.“ → Sie sagt, sie ___ weg.", ["fahre", "fährt"]],
+  ["„Ich habe Hunger.“ → Er sagt, er ___ Hunger.", ["habe", "hat"]],
+  ["„Ich bin froh.“ → Sie sagt, sie ___ froh.", ["sei", "ist"]],
+  ["„Ich kann das.“ → Er sagt, er ___ das.", ["könne", "kann"]],
+  ["„Ich will gehen.“ → Sie sagt, sie ___ gehen.", ["wolle", "will"]],
+  ["„Ich weiß es.“ → Er behauptet, er ___ es.", ["wisse", "weiß"]],
+  ["„Ich darf das.“ → Er sagt, er ___ das.", ["dürfe", "darf"]],
+  ["„Ich komme mit.“ → Er sagt, er ___ mit.", ["komme", "kommt"]],
+  ["„Ich sehe nichts.“ → Sie sagt, sie ___ nichts.", ["sehe", "sieht"]],
+  ["„Ich gebe auf.“ → Er sagt, er ___ auf.", ["gebe", "gibt"]],
+  ["„Ich nehme teil.“ → Sie sagt, sie ___ teil.", ["nehme", "nimmt"]],
+].forEach(([q, o]) => addQ("Konjunktiv", q, o, 0, "recognize", "Indirekte Rede → Konjunktiv I."));
+addQ("Konjunktiv", "Der Konjunktiv I steht in der …", ["indirekten Rede", "Befehlsform"], 0, "mc");
+addQ("Konjunktiv", "„er sei, er habe, er gehe“ ist …", ["Konjunktiv I", "Indikativ"], 0, "mc");
+addQ("Konjunktiv", "Konjunktiv I von „werden“ (er) ist …", ["werde", "wird"], 0, "mc");
+addQ("Konjunktiv", "Die Anführungszeichen „…“ stehen bei der …", ["direkten Rede", "indirekten Rede"], 0, "mc");
+
+/* =====================================================================
    IDs, Themen-Infos
    ===================================================================== */
 QUESTIONS.forEach((q) => { q.id = q.topic + "::" + q.q + "::" + q.options.join("|"); });

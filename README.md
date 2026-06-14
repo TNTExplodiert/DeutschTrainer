@@ -39,7 +39,7 @@ Roblox-Stil** (Idee #5 aus den Spielideen):
 - 🎮 **Zwei Spielmodi**: **Obby** (auf die richtige Plattform springen) und
   **Cube Dash** (Geometry-Dash-Stil: Würfel rennt, oben/unten = Antwort wählen)
 - ⭐ **10 Level/Sterne pro Thema** zum Sammeln (nach hinten kniffliger)
-- 🧠 **600+ Übungen** in 18 Themen – auch **Erkennen in echten Sätzen**
+- 🧠 **1000+ Übungen** in 18 Themen – auch **Erkennen in echten Sätzen**
   (Adverbiale, Fälle, Artikel, Zeitformen), **Kommasetzung** und
   **Satzverbindung/Umstellung** (zwei Hauptsätze → Haupt-/Nebensatz)
 - 💡 **Erklärungen** bei falschen Antworten
