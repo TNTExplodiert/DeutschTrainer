@@ -72,7 +72,7 @@ const DASH_SPEED = { easy: 4.2, medium: 5.4, hard: 6.8 };
 
 // ---- Wave (Geometry-Dash-Wave-Modus) ----
 let wave = null;
-const WAVE = { CX: 170, TOP: 74, BOT: 516, SZ: 20, APPROACH: 520, TUNNEL: 900, PAD: 360 };
+const WAVE = { CX: 170, TOP: 74, BOT: 516, SZ: 20, APPROACH: 1180, TUNNEL: 900, PAD: 360 };
 const WAVE_SPEED = { easy: 3.6, medium: 4.6, hard: 5.8 };
 const WAVE_SEC = WAVE.APPROACH + WAVE.TUNNEL;
 
@@ -681,9 +681,10 @@ function drawWaveSection(sec) {
       ctx.fillRect(Math.max(0, sx1 - 26), yTop, 26, h);
     }
   }
-  // Antwort-Labels in der Anflugzone (offen, vor dem Tunnel)
-  const labelX = WAVE.CX + (secStart + WAVE.APPROACH * 0.5 - wave.worldX);
-  if (labelX > -260 && labelX < W + 260) {
+  // Antwort-Labels: sobald der Tunnel in Sicht ist, am rechten Rand einblenden
+  // und mit dem Eingang nach links wandern – bleibt die ganze Anflugzone lesbar.
+  const labelX = Math.min(sx0 - 60, W - 200);
+  if (sx0 > WAVE.CX && labelX > -200) {
     for (let band = 0; band < lay.n; band++) {
       const yc = WAVE.TOP + band * laneH + laneH / 2;
       const w = Math.min(360, laneH > 90 ? 360 : 240);
@@ -1227,6 +1228,14 @@ function endCanvasTouch(e) {
 }
 canvas.addEventListener("touchend", endCanvasTouch, { passive: false });
 canvas.addEventListener("touchcancel", endCanvasTouch, { passive: false });
+
+// Maus (PC): Klick/Halten auf dem Spielfeld = Feuer-/Sprungtaste
+canvas.addEventListener("mousedown", (e) => {
+  if (appState !== "playing") return;
+  e.preventDefault();
+  keys.jump = true;
+});
+window.addEventListener("mouseup", () => { keys.jump = false; });
 
 /* ---------------------------------------------------------------------
    DOM-Buttons verdrahten
