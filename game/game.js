@@ -586,33 +586,38 @@ function updateWave() {
   wave.trail.push({ wx: wave.worldX, y: s.y + WAVE.SZ / 2 });
   if (wave.trail.length > 70) wave.trail.shift();
 
-  // Decke/Boden = Crash
-  if (s.y < WAVE.TOP || s.y + WAVE.SZ > WAVE.BOT) { waveDie(); return; }
-
   const sec = Math.floor(wave.worldX / WAVE_SEC);
-  if (sec < wave.layouts.length) {
-    const secStart = sec * WAVE_SEC;
-    const tunnelStart = secStart + WAVE.APPROACH;
-    const tunnelEnd = tunnelStart + WAVE.TUNNEL;
-    const lay = wave.layouts[sec];
+  const lay = sec < wave.layouts.length ? wave.layouts[sec] : null;
+  const tunnelStart = sec * WAVE_SEC + WAVE.APPROACH;
+  const tunnelEnd = tunnelStart + WAVE.TUNNEL;
+  const inTunnel = lay && wave.worldX >= tunnelStart && wave.worldX <= tunnelEnd;
+  const curExplain = () => (lay ? (wave.questions[sec].explain || "") : "");
+
+  // Decke/Boden = Crash (im Tunnel mit Erklärung)
+  if (s.y < WAVE.TOP || s.y + WAVE.SZ > WAVE.BOT) {
+    wave.lastExplain = inTunnel ? curExplain() : "";
+    waveDie(); return;
+  }
+
+  if (lay) {
     const laneH = (WAVE.BOT - WAVE.TOP) / lay.n;
 
-    // Im Tunnel: Trennwände (Crash beim Überqueren)
-    if (wave.worldX >= tunnelStart && wave.worldX <= tunnelEnd) {
+    // Im Tunnel: Trennwände (Crash beim Überqueren) -> Erklärung anzeigen
+    if (inTunnel) {
       for (let k = 1; k < lay.n; k++) {
         const yk = WAVE.TOP + k * laneH;
-        if (s.y < yk && s.y + WAVE.SZ > yk) { waveDie(); return; }
+        if (s.y < yk && s.y + WAVE.SZ > yk) { wave.lastExplain = curExplain(); waveDie(); return; }
       }
     }
 
-    // An der Wand (kurz vor Tunnelende): falsches Band -> Crash an der roten Wand
+    // An der Wand (kurz vor Tunnelende): falsches Band -> Crash mit Erklärung
     if (wave.worldX >= tunnelEnd - WAVE.WALL && !lay.judged) {
       lay.judged = true;
       const band = Math.max(0, Math.min(lay.n - 1, Math.floor(((s.y + WAVE.SZ / 2) - WAVE.TOP) / laneH)));
       const correct = (band === lay.correctBand);
       Storage.recordAnswer(profile, wave.questions[sec], correct);
       Storage.saveProfile(profile);
-      if (!correct) { wave.lastExplain = wave.questions[sec].explain || ""; waveDie(); return; }
+      if (!correct) { wave.lastExplain = curExplain(); waveDie(); return; }
     }
   }
 
@@ -725,7 +730,7 @@ function drawWaveTrail() {
   ctx.beginPath();
   for (let i = 0; i < wave.trail.length; i++) {
     const p = wave.trail[i];
-    const x = WAVE.CX + (p.wx - wave.worldX);
+    const x = WAVE.CX + WAVE.SZ / 2 + (p.wx - wave.worldX);  // mittig hinter dem Schiff
     if (i === 0) ctx.moveTo(x, p.y); else ctx.lineTo(x, p.y);
   }
   ctx.strokeStyle = "rgba(255,225,77,0.45)"; ctx.lineWidth = 7; ctx.stroke();
@@ -762,7 +767,7 @@ function drawWaveHud() {
     ctx.fillText(wave.lastExplain ? "Falsch!" : "Crash!", W / 2, 178);
     if (wave.lastExplain) { ctx.fillStyle = "#ffe08a"; drawWrapped("💡 " + wave.lastExplain, W / 2, 206, 640, 38, 16); }
     ctx.fillStyle = "#9fd0ff"; ctx.font = "bold 15px Trebuchet MS";
-    ctx.fillText("▶ Steigen / Klicken zum Neustart", W / 2, 236);
+    ctx.fillText("▶ Steigen / Klick / Taste „r“ zum Neustart", W / 2, 236);
     ctx.textAlign = "left";
     return;
   }
@@ -889,7 +894,7 @@ function drawDashHud() {
     ctx.fillText(dash.lastExplain ? "Falsch!" : "Crash!", W / 2, 166);
     if (dash.lastExplain) { ctx.fillStyle = "#ffe08a"; drawWrapped("💡 " + dash.lastExplain, W / 2, 194, 640, 38, 16); }
     ctx.fillStyle = "#9fd0ff"; ctx.font = "bold 15px Trebuchet MS";
-    ctx.fillText("▶ Springen / Klicken zum Neustart", W / 2, 224);
+    ctx.fillText("▶ Springen / Klick / Taste „r“ zum Neustart", W / 2, 224);
     ctx.textAlign = "left";
     return;
   }
@@ -939,7 +944,7 @@ function draw() {
       ctx.fillText("Falsch!", W / 2, 150);
       if (obbyExplain) { ctx.fillStyle = "#ffe08a"; drawWrapped("💡 " + obbyExplain, W / 2, 178, 640, 38, 16); }
       ctx.fillStyle = "#9fd0ff"; ctx.font = "bold 15px Trebuchet MS";
-      ctx.fillText("▶ Springen / Klicken zum Weitermachen", W / 2, 210);
+      ctx.fillText("▶ Springen / Klick / Taste „r“ zum Weitermachen", W / 2, 210);
       ctx.textAlign = "left";
     } else if (feedback) {
       ctx.font = "bold 30px Trebuchet MS";
@@ -1234,6 +1239,13 @@ const keyMap = {
 };
 window.addEventListener("keydown", (e) => {
   if (keyMap[e.code]) { keys[keyMap[e.code]] = true; e.preventDefault(); }
+  // "r" = sofortiger Respawn nach einem Crash
+  if (e.code === "KeyR" && appState === "playing") {
+    if (gameMode === "wave" && wave && wave.dead) restartWave();
+    else if (gameMode === "dash" && dash && dash.dead) restartDash();
+    else if (gameMode === "obby" && obbyDead && session) buildStage(session.queue[0]);
+    e.preventDefault();
+  }
 });
 window.addEventListener("keyup", (e) => {
   if (keyMap[e.code]) { keys[keyMap[e.code]] = false; e.preventDefault(); }
