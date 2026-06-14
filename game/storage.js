@@ -46,6 +46,7 @@ const Storage = (function () {
       due: {},         // questionId -> true (noch nicht richtig gelöst)
       completed: {},   // topic -> true (alle 10 Level geschafft)
       stars: {},       // topic -> { levelNr: true } (gesammelte Sterne, 10 pro Thema)
+      nine: {},        // topic -> true (Bonus-Level 11 „NINE“ gemeistert)
     };
   }
 

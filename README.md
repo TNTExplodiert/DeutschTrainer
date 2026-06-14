@@ -39,7 +39,8 @@ Roblox-Stil** (Idee #5 aus den Spielideen):
 - 🎮 **Drei Spielmodi**: **Obby** (auf die richtige Plattform springen),
   **Cube Dash** (Geometry-Dash-Stil: oben/unten) und **Wave** (Raumschiff durch
   den richtigen Tunnel – falsche Tunnel enden in einer Wand)
-- ⭐ **10 Level/Sterne pro Thema** zum Sammeln (nach hinten kniffliger)
+- ⭐ **10 Level/Sterne pro Thema** zum Sammeln (nach hinten kniffliger) – plus ein
+  freischaltbares **Bonus-Level 11 „NINE"** 🌀 (Nine-Circles-Style-Wave, ~3× so lang)
 - 🧠 **1000+ Übungen** in 18 Themen – auch **Erkennen in echten Sätzen**
   (Adverbiale, Fälle, Artikel, Zeitformen), **Kommasetzung** und
   **Satzverbindung/Umstellung** (zwei Hauptsätze → Haupt-/Nebensatz)
@@ -62,6 +63,8 @@ Datei [`game/audio.js`](game/audio.js)) – es gibt **keine externen Audiodateie
 - **Cube Dash & Wave:** treibender 4/4-Techno-Beat, dessen **Tempo langsam ansteigt**
   (Neustart des Tempos nach jedem Crash) + **Crash-Sound**
 - **Obby:** fröhliche **Original-Chiptune im Mario-Stil** + **Fehler-Sound** bei falscher Antwort
+- **Bonus-Level „NINE":** intensiver, schneller **Original-Track im Nine-Circles-Stil**
+  (NICHT der echte, urheberrechtlich geschützte Nine-Circles-Song)
 
 **Lizenz:** Die Musik ist eine **eigene Komposition** dieses Projekts und damit
 **lizenz-/gebührenfrei** nutzbar. Es werden **keine** urheberrechtlich geschützten

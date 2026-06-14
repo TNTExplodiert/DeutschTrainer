@@ -138,7 +138,8 @@ function topicStatus(topic) {
   let cls = "";
   if (stars >= LEVELS_PER_TOPIC) cls = "mastered";
   else if (due > 0) cls = "weak";
-  return { cls, label: "⭐ " + stars + "/" + LEVELS_PER_TOPIC + (due > 0 ? "  ⚠️" + due : "") };
+  const nine = (profile.nine && profile.nine[topic]) ? "  🌀" : "";
+  return { cls, label: "⭐ " + stars + "/" + LEVELS_PER_TOPIC + (due > 0 ? "  ⚠️" + due : "") + nine };
 }
 function weakTopics() {
   return TOPIC_ORDER.filter((t) => {
@@ -194,9 +195,17 @@ function buildAdaptiveQueue() {
 }
 
 function startSession(mode, topic, level) {
-  const queue = mode === "topic" ? buildLevelQueue(topic, level) : buildAdaptiveQueue();
+  const nine = (mode === "topic" && level === 11);   // Bonus-Level „NINE“
+  let queue;
+  if (mode === "adaptive") queue = buildAdaptiveQueue();
+  else if (nine) queue = shuffle(questionsByTopic(topic).slice()).slice(0, 10);
+  else queue = buildLevelQueue(topic, level);
+
+  // Spielmodus festlegen: normal = gewählter Modus; NINE = immer Wave
+  gameMode = nine ? "wave" : (profile.gameMode || gameMode);
+
   session = {
-    mode, topic, level: level || null,
+    mode, topic, level: level || null, nine,
     queue,
     total: queue.length,
     askedWrong: new Set(),
@@ -209,12 +218,12 @@ function startSession(mode, topic, level) {
   if (gameMode === "dash") {
     startDash(queue);
   } else if (gameMode === "wave") {
-    startWave(queue);
+    startWave(queue, nine);
   } else {
     applyDifficulty(difficulty);
     buildStage(session.queue[0]);
   }
-  if (window.GameAudio) window.GameAudio.play(gameMode === "obby" ? "mario" : "techno");
+  if (window.GameAudio) window.GameAudio.play(nine ? "nine" : (gameMode === "obby" ? "mario" : "techno"));
 }
 
 // Touch-Steuerung je nach Modus: in Dash/Wave nur eine Taste (Laufpfeile aus)
@@ -396,6 +405,17 @@ function advanceAfterExit() {
 }
 
 function completeLevel(statsHTML) {
+  const tn = TOPIC_INFO[session.topic] ? TOPIC_INFO[session.topic].name : session.topic;
+  if (session.nine) {
+    profile.nine = profile.nine || {};
+    profile.nine[session.topic] = true;
+    Storage.saveProfile(profile);
+    document.getElementById("lc-title").textContent = "🌀👑 NINE gemeistert – " + tn + "!";
+    document.getElementById("lc-stats").innerHTML = statsHTML;
+    document.getElementById("lc-next").classList.add("hidden");
+    showState("levelcomplete");
+    return;
+  }
   // Stern vergeben (nur im Themen-/Level-Modus)
   if (session.mode === "topic" && session.level) {
     profile.stars[session.topic] = profile.stars[session.topic] || {};
@@ -404,7 +424,6 @@ function completeLevel(statsHTML) {
   }
   Storage.saveProfile(profile);
 
-  const tn = TOPIC_INFO[session.topic] ? TOPIC_INFO[session.topic].name : session.topic;
   document.getElementById("lc-title").textContent = session.mode === "topic"
     ? "🏆 " + tn + " · Level " + session.level + " ⭐"
     : "🏆 Übungs-Mix geschafft!";
@@ -549,16 +568,21 @@ function dashFinish() {
    Pro Frage N Tunnel (= Antworten). Falsche enden in einer Wand -> Crash.
    Tunnel-Reihenfolge wird bei JEDEM Versuch neu gemischt.
    ===================================================================== */
-function startWave(questions) {
-  const n = Math.min(5, questions.length);
+function startWave(questions, nine) {
+  const n = nine ? Math.min(10, questions.length) : Math.min(5, questions.length);
+  const approach = nine ? 2400 : WAVE.APPROACH;   // Nine-Level: längerer Anflug -> ~3x so lang
+  const tunnel = WAVE.TUNNEL;
+  const sec = approach + tunnel;
   wave = {
     questions: questions.slice(0, n),
-    speed: WAVE_SPEED[difficulty] || 4.6,
+    nine: !!nine,
+    speed: nine ? 6.0 : (WAVE_SPEED[difficulty] || 4.6),
+    approach: approach, tunnel: tunnel, sec: sec,
     worldX: 0, attempt: 1,
     ship: { y: (WAVE.TOP + WAVE.BOT) / 2 - WAVE.SZ / 2 },
     dead: false, deadT: 0, lastExplain: "",
     layouts: [], particles: [], trail: [],
-    finishX: n * WAVE_SEC + WAVE.PAD,
+    finishX: n * sec + WAVE.PAD,
   };
   waveBuildLayouts();
 }
@@ -593,10 +617,10 @@ function updateWave() {
   wave.trail.push({ wx: wave.worldX, y: s.y + WAVE.SZ / 2 });
   if (wave.trail.length > 70) wave.trail.shift();
 
-  const sec = Math.floor(wave.worldX / WAVE_SEC);
+  const sec = Math.floor(wave.worldX / wave.sec);
   const lay = sec < wave.layouts.length ? wave.layouts[sec] : null;
-  const tunnelStart = sec * WAVE_SEC + WAVE.APPROACH;
-  const tunnelEnd = tunnelStart + WAVE.TUNNEL;
+  const tunnelStart = sec * wave.sec + wave.approach;
+  const tunnelEnd = tunnelStart + wave.tunnel;
   const inTunnel = lay && wave.worldX >= tunnelStart && wave.worldX <= tunnelEnd;
   const curExplain = () => (lay ? (wave.questions[sec].explain || "") : "");
 
@@ -661,17 +685,31 @@ function waveFinish() {
 
 /* ---- Wave zeichnen ---- */
 function drawWave() {
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, "#1a0b3a"); g.addColorStop(1, "#2d0b5a");
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  if (wave.nine) {
+    // Nine-Circles-Look: dunkel + pulsierende Neon-Ringe
+    ctx.fillStyle = "#070010"; ctx.fillRect(0, 0, W, H);
+    const cx = W / 2, cy = (WAVE.TOP + WAVE.BOT) / 2;
+    const pulse = (animTime * 0.06) % 70;
+    for (let i = 6; i >= 0; i--) {
+      const r = i * 70 + pulse;
+      const hue = (animTime * 2 + i * 40) % 360;
+      ctx.strokeStyle = "hsla(" + hue + ",100%,60%,0.30)";
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke();
+    }
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#1a0b3a"); g.addColorStop(1, "#2d0b5a");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
 
   // Decke / Boden
-  ctx.fillStyle = "#0c0720";
+  ctx.fillStyle = wave.nine ? "#1a0026" : "#0c0720";
   ctx.fillRect(0, 0, W, WAVE.TOP); ctx.fillRect(0, WAVE.BOT, W, H - WAVE.BOT);
-  ctx.fillStyle = "#19e0ff";
+  ctx.fillStyle = wave.nine ? "#ff2bd0" : "#19e0ff";
   ctx.fillRect(0, WAVE.TOP - 3, W, 3); ctx.fillRect(0, WAVE.BOT, W, 3);
 
-  const sec0 = Math.floor(wave.worldX / WAVE_SEC);
+  const sec0 = Math.floor(wave.worldX / wave.sec);
   for (let sec = Math.max(0, sec0 - 1); sec <= sec0 + 1 && sec < wave.layouts.length; sec++) drawWaveSection(sec);
 
   // Ziellinie
@@ -690,15 +728,15 @@ function drawWave() {
 
 function drawWaveSection(sec) {
   const lay = wave.layouts[sec];
-  const secStart = sec * WAVE_SEC;
-  const tunnelStart = secStart + WAVE.APPROACH;
-  const tunnelEnd = tunnelStart + WAVE.TUNNEL;
+  const secStart = sec * wave.sec;
+  const tunnelStart = secStart + wave.approach;
+  const tunnelEnd = tunnelStart + wave.tunnel;
   const laneH = (WAVE.BOT - WAVE.TOP) / lay.n;
   const sx0 = WAVE.CX + (tunnelStart - wave.worldX);
   const sx1 = WAVE.CX + (tunnelEnd - wave.worldX);
 
   // Trennwände
-  ctx.fillStyle = "#19e0ff";
+  ctx.fillStyle = wave.nine ? "#ff2bd0" : "#19e0ff";
   for (let k = 1; k < lay.n; k++) {
     const yk = WAVE.TOP + k * laneH;
     const a = Math.max(0, sx0), b = Math.min(W, sx1);
@@ -716,7 +754,7 @@ function drawWaveSection(sec) {
   }
   // Antwort-Labels „fliegen mit“ bis zum Tunneleingang (an den Bändern ausgerichtet).
   // Nur für die aktuelle Sektion, damit sich nichts überlagert.
-  const curSec = Math.floor(wave.worldX / WAVE_SEC);
+  const curSec = Math.floor(wave.worldX / wave.sec);
   if (sec === curSec) {
     const lx = Math.min(sx0 - 30, 560);   // geparkt bei x=560, am Ende mit dem Eingang nach links
     if (sx0 > WAVE.CX - 10 && lx > -40) {
@@ -780,7 +818,7 @@ function drawWaveHud() {
     ctx.textAlign = "left";
     return;
   }
-  const sec = Math.floor(wave.worldX / WAVE_SEC);
+  const sec = Math.floor(wave.worldX / wave.sec);
   const q = wave.questions[Math.min(sec, wave.questions.length - 1)];
   if (q) {
     ctx.fillStyle = "#fff"; ctx.textAlign = "center";
@@ -1137,6 +1175,7 @@ function renderMap() {
 let currentTopic = null;
 function openLevels(topic) {
   currentTopic = topic;
+  gameMode = profile.gameMode || gameMode;   // nach NINE wieder gewählten Modus herstellen
   document.getElementById("levels-title").textContent = TOPIC_INFO[topic].icon + " " + TOPIC_INFO[topic].name;
   document.getElementById("levels-stars").textContent = "⭐ " + starCount(topic) + "/" + LEVELS_PER_TOPIC;
   levelsGrid.innerHTML = "";
@@ -1145,6 +1184,18 @@ function openLevels(topic) {
     const got = !!done[k];
     const card = makeCard(got ? "⭐" : "▶️", "Level " + k, got ? "geschafft" : "spielen", got ? "mastered" : "");
     card.onclick = () => startSession("topic", topic, k);
+    levelsGrid.appendChild(card);
+  }
+  // Bonus-Level 11 „NINE“ – erst nach 10 Sternen, Nine-Circles-Wave-Challenge
+  const allDone = starCount(topic) >= LEVELS_PER_TOPIC;
+  const nineDone = !!(profile.nine && profile.nine[topic]);
+  if (allDone) {
+    const card = makeCard("🌀", "Level 11 · NINE", nineDone ? "gemeistert 👑" : "Nine-Circles-Challenge", "adaptive");
+    card.onclick = () => startSession("topic", topic, 11);
+    levelsGrid.appendChild(card);
+  } else {
+    const card = makeCard("🔒", "Level 11 · NINE", "10 Sterne sammeln", "");
+    card.style.opacity = "0.55";
     levelsGrid.appendChild(card);
   }
   showState("levels");
