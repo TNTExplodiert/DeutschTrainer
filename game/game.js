@@ -14,6 +14,7 @@ const H = canvas.height;  // 540
 const elApp = document.getElementById("app");
 const elTouch = document.getElementById("touch-controls");
 const elBack = document.getElementById("btn-back");
+const elMute = document.getElementById("btn-mute");
 const overlays = {
   consent: document.getElementById("overlay-consent"),
   device: document.getElementById("overlay-device"),
@@ -96,6 +97,7 @@ function showState(name) {
   // Touch-Steuerung nur im Spiel und nicht am PC
   elTouch.classList.toggle("hidden", !(deviceClass !== "pc" && name === "playing"));
   elBack.classList.toggle("hidden", name !== "playing");
+  if (window.GameAudio && name !== "playing") window.GameAudio.stop();
 }
 
 // Standard-Gerät anhand des aktuellen Geräts vorschlagen
@@ -211,6 +213,7 @@ function startSession(mode, topic, level) {
     applyDifficulty(difficulty);
     buildStage(session.queue[0]);
   }
+  if (window.GameAudio) window.GameAudio.play(gameMode === "obby" ? "mario" : "techno");
 }
 
 // Touch-Steuerung je nach Modus: in Dash/Wave nur eine Taste (Laufpfeile aus)
@@ -1209,6 +1212,7 @@ function updateConsentStatus() {
     ? "✓ Dein Fortschritt wird in diesem Browser gespeichert."
     : "ⓘ Fortschritt wird nicht gespeichert (Cookies abgelehnt).";
 }
+function updateMuteBtn() { if (elMute) elMute.textContent = profile.muted ? "🔇" : "🔊"; }
 
 /* ---------------------------------------------------------------------
    Responsive: Canvas an Fenstergröße anpassen (Seitenverhältnis bleibt)
@@ -1298,6 +1302,8 @@ function syncFromProfile() {
   deviceClass = profile.device || detectDevice();
   applyDevice();
   selectDifficultyUI(); selectModeUI(); updateConsentStatus();
+  if (window.GameAudio) window.GameAudio.setMuted(!!profile.muted);
+  updateMuteBtn();
 }
 document.getElementById("consent-accept").onclick = () => {
   Storage.grantConsent();
@@ -1341,6 +1347,12 @@ document.querySelectorAll(".diff-btn").forEach((b) => {
 document.getElementById("menu-back").onclick = () => { selectModeUI(); showState("mode"); };
 document.getElementById("goto-map").onclick = () => { renderMap(); showState("map"); };
 document.getElementById("map-back").onclick = () => { selectDifficultyUI(); selectModeUI(); showState("menu"); };
+elMute.onclick = () => {
+  profile.muted = !profile.muted;
+  Storage.saveProfile(profile);
+  if (window.GameAudio) window.GameAudio.setMuted(profile.muted);
+  updateMuteBtn();
+};
 document.getElementById("map-stats").onclick = () => renderStats();
 document.getElementById("stats-back").onclick = () => { renderMap(); showState("map"); };
 document.getElementById("stats-practice").onclick = () => startSession("adaptive", null, null);
@@ -1380,6 +1392,7 @@ function init() {
     profile = Storage.defaultProfile();
     deviceClass = detectDevice();
     applyDevice();
+    updateMuteBtn();
     showState("consent");
   }
   loop();

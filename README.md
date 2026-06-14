@@ -52,6 +52,20 @@ Roblox-Stil** (Idee #5 aus den Spielideen):
 - 🔁 **Falsch gelöste Aufgaben werden wiederholt**, bis sie sitzen
 - 🧠 **Lernprofil**: merkt sich Problem-Themen → **Übungs-Mix** wiederholt diese gezielt
 - 🍪 **Fortschritt wird in Cookies gespeichert** (mit Zustimmungs-Banner)
+- 🎵 **Hintergrundmusik** (per 🔊-Knopf stummschaltbar): flotter Techno bei Cube Dash & Wave, fröhliche Chiptune (Mario-Stil) im Obby
+
+## 🎵 Musik
+
+Die gesamte Hintergrundmusik wird **prozedural im Browser erzeugt** (Web Audio API,
+Datei [`game/audio.js`](game/audio.js)) – es gibt **keine externen Audiodateien**:
+
+- **Cube Dash & Wave:** treibender 4/4-Techno-Beat
+- **Obby:** fröhliche **Original-Chiptune im Mario-Stil**
+
+**Lizenz:** Die Musik ist eine **eigene Komposition** dieses Projekts und damit
+**lizenz-/gebührenfrei** nutzbar. Es werden **keine** urheberrechtlich geschützten
+Originalmelodien (z. B. das echte Super-Mario-Thema) verwendet. Über den
+🔊/🔇-Knopf oben rechts lässt sich die Musik jederzeit an-/ausschalten.
 
 **Themen (passend zum echten Schulstoff / euren Arbeitsblättern):**
 *Rechtschreibung:* das/dass · Groß & klein · Nominalisierung · s·ss·ß · Getrennt & zusammen · Kommasetzung.

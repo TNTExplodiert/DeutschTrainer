@@ -41,6 +41,7 @@ const Storage = (function () {
       difficulty: "medium",
       device: null,    // pc | tablet | phone
       gameMode: "obby",
+      muted: false,
       topics: {},      // topic -> { correct, wrong }
       due: {},         // questionId -> true (noch nicht richtig gelöst)
       completed: {},   // topic -> true (alle 10 Level geschafft)
