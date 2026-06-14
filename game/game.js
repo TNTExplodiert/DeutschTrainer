@@ -385,6 +385,7 @@ function onLand(p) {
     player.vx = 0; player.vy = -4;
     player.locked = true;
     obbyDead = true; obbyNeedRelease = true; obbyDeadT = 0; obbyExplain = stage.q.explain || "";
+    if (window.GameAudio) window.GameAudio.sfx("fail");
   }
 }
 
@@ -513,6 +514,7 @@ function updateDash() {
 
 function dashDie() {
   dash.dead = true; dash.deadT = 0; dash.needRelease = true;
+  if (window.GameAudio) window.GameAudio.sfx("crash");
   const c = dash.cube;
   dash.particles = [];
   for (let i = 0; i < 16; i++) {
@@ -527,6 +529,7 @@ function dashDie() {
 function restartDash() {
   dash.dead = false; dash.deadT = 0; dash.lastExplain = "";
   dash.worldX = 0; dash.attempt++;
+  if (window.GameAudio) window.GameAudio.restart();
   for (const g of dash.gates) g.judged = false;
   dash.cube.y = DASH.GROUND_Y - DASH.CUBE;
   dash.cube.vy = 0; dash.cube.onGround = true; dash.cube.rot = 0;
@@ -629,6 +632,7 @@ function updateWave() {
 
 function waveDie() {
   wave.dead = true; wave.deadT = 0; wave.needRelease = true;
+  if (window.GameAudio) window.GameAudio.sfx("crash");
   const s = wave.ship;
   wave.particles = [];
   for (let i = 0; i < 16; i++) {
@@ -642,6 +646,7 @@ function waveDie() {
 function restartWave() {
   wave.dead = false; wave.deadT = 0; wave.lastExplain = "";
   wave.worldX = 0; wave.attempt++;
+  if (window.GameAudio) window.GameAudio.restart();
   wave.ship.y = (WAVE.TOP + WAVE.BOT) / 2 - WAVE.SZ / 2;
   wave.particles = []; wave.trail = [];
   waveBuildLayouts();   // Reihenfolge neu mischen!

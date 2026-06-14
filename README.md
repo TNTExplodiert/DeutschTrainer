@@ -59,8 +59,9 @@ Roblox-Stil** (Idee #5 aus den Spielideen):
 Die gesamte Hintergrundmusik wird **prozedural im Browser erzeugt** (Web Audio API,
 Datei [`game/audio.js`](game/audio.js)) – es gibt **keine externen Audiodateien**:
 
-- **Cube Dash & Wave:** treibender 4/4-Techno-Beat
-- **Obby:** fröhliche **Original-Chiptune im Mario-Stil**
+- **Cube Dash & Wave:** treibender 4/4-Techno-Beat, dessen **Tempo langsam ansteigt**
+  (Neustart des Tempos nach jedem Crash) + **Crash-Sound**
+- **Obby:** fröhliche **Original-Chiptune im Mario-Stil** + **Fehler-Sound** bei falscher Antwort
 
 **Lizenz:** Die Musik ist eine **eigene Komposition** dieses Projekts und damit
 **lizenz-/gebührenfrei** nutzbar. Es werden **keine** urheberrechtlich geschützten
