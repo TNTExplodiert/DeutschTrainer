@@ -548,7 +548,7 @@ function startWave(questions) {
     worldX: 0, attempt: 1,
     ship: { y: (WAVE.TOP + WAVE.BOT) / 2 - WAVE.SZ / 2 },
     dead: false, deadT: 0, lastExplain: "",
-    layouts: [], particles: [],
+    layouts: [], particles: [], trail: [],
     finishX: n * WAVE_SEC + WAVE.PAD,
   };
   waveBuildLayouts();
@@ -581,6 +581,8 @@ function updateWave() {
   const vy = wave.speed * 0.85;
   s.y += keys.jump ? -vy : vy;
   wave.worldX += wave.speed;
+  wave.trail.push({ wx: wave.worldX, y: s.y + WAVE.SZ / 2 });
+  if (wave.trail.length > 70) wave.trail.shift();
 
   // Decke/Boden = Crash
   if (s.y < WAVE.TOP || s.y + WAVE.SZ > WAVE.BOT) { waveDie(); return; }
@@ -631,7 +633,7 @@ function restartWave() {
   wave.dead = false; wave.deadT = 0; wave.lastExplain = "";
   wave.worldX = 0; wave.attempt++;
   wave.ship.y = (WAVE.TOP + WAVE.BOT) / 2 - WAVE.SZ / 2;
-  wave.particles = [];
+  wave.particles = []; wave.trail = [];
   waveBuildLayouts();   // Reihenfolge neu mischen!
 }
 
@@ -660,6 +662,7 @@ function drawWave() {
   const fx = WAVE.CX + (wave.finishX - wave.worldX);
   if (fx < W + 40) { ctx.fillStyle = "#7CFC00"; ctx.fillRect(fx, WAVE.TOP, 10, WAVE.BOT - WAVE.TOP); }
 
+  drawWaveTrail();
   if (wave.dead) {
     ctx.fillStyle = "#ffe14d";
     for (const p of wave.particles) if (p.life > 0) ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
@@ -695,19 +698,36 @@ function drawWaveSection(sec) {
       ctx.fillRect(wfx0, WAVE.TOP + band * laneH + 4, Math.max(6, wfx1 - wfx0), laneH - 8);
     }
   }
-  // Antwort-Labels FRÜH in der Anflugzone, direkt an den Bändern ausgerichtet
-  const lx = WAVE.CX + (secStart + 280 - wave.worldX);
-  if (lx > -280 && lx < W + 60) {
-    for (let band = 0; band < lay.n; band++) {
-      const yc = WAVE.TOP + band * laneH + laneH / 2;
-      const w = laneH > 90 ? 360 : 250;
-      ctx.fillStyle = "rgba(10,8,30,0.82)";
-      dashRoundRect(lx - w / 2, yc - Math.min(24, laneH / 2 - 3), w, Math.min(48, laneH - 6), 8); ctx.fill();
-      ctx.fillStyle = "#fff"; ctx.textAlign = "center";
-      drawWrapped(lay.labels[band], lx, yc + 4, w - 16, Math.min(42, laneH - 12), 17);
-      ctx.textAlign = "left";
+  // Antwort-Labels „fliegen mit“ bis zum Tunneleingang (an den Bändern ausgerichtet).
+  // Nur für die aktuelle Sektion, damit sich nichts überlagert.
+  const curSec = Math.floor(wave.worldX / WAVE_SEC);
+  if (sec === curSec) {
+    const lx = Math.min(sx0 - 30, 560);   // geparkt bei x=560, am Ende mit dem Eingang nach links
+    if (sx0 > WAVE.CX - 10 && lx > -40) {
+      for (let band = 0; band < lay.n; band++) {
+        const yc = WAVE.TOP + band * laneH + laneH / 2;
+        const w = laneH > 90 ? 360 : 250;
+        ctx.fillStyle = "rgba(10,8,30,0.85)";
+        dashRoundRect(lx - w / 2, yc - Math.min(24, laneH / 2 - 3), w, Math.min(48, laneH - 6), 8); ctx.fill();
+        ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+        drawWrapped(lay.labels[band], lx, yc + 4, w - 16, Math.min(42, laneH - 12), 17);
+        ctx.textAlign = "left";
+      }
     }
   }
+}
+
+function drawWaveTrail() {
+  if (!wave.trail || wave.trail.length < 2) return;
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  ctx.beginPath();
+  for (let i = 0; i < wave.trail.length; i++) {
+    const p = wave.trail[i];
+    const x = WAVE.CX + (p.wx - wave.worldX);
+    if (i === 0) ctx.moveTo(x, p.y); else ctx.lineTo(x, p.y);
+  }
+  ctx.strokeStyle = "rgba(255,225,77,0.45)"; ctx.lineWidth = 7; ctx.stroke();
+  ctx.strokeStyle = "#ffe14d"; ctx.lineWidth = 2.5; ctx.stroke();
 }
 
 function drawShip() {
