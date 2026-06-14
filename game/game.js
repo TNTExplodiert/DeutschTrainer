@@ -98,6 +98,7 @@ function showState(name) {
   elTouch.classList.toggle("hidden", !(deviceClass !== "pc" && name === "playing"));
   elBack.classList.toggle("hidden", name !== "playing");
   if (window.GameAudio && name !== "playing") window.GameAudio.stop();
+  if (name === "mode" && typeof resetModeView === "function") resetModeView();
 }
 
 // Standard-Gerät anhand des aktuellen Geräts vorschlagen
@@ -1332,7 +1333,7 @@ document.querySelectorAll(".dev-btn").forEach((b) => {
   };
 });
 document.getElementById("mode-back").onclick = () => showState("device");
-document.querySelectorAll(".mode-btn:not(.dev-btn)").forEach((b) => {
+document.querySelectorAll(".mode-btn[data-mode]").forEach((b) => {
   b.onclick = () => {
     gameMode = b.dataset.mode;
     profile.gameMode = gameMode;
@@ -1341,6 +1342,18 @@ document.querySelectorAll(".mode-btn:not(.dev-btn)").forEach((b) => {
     showState("menu");
   };
 });
+// "Geometry Dash" -> Unterauswahl Cube / Wave
+function resetModeView() {
+  const prim = document.getElementById("mode-primary");
+  const sub = document.getElementById("mode-gd-sub");
+  if (prim) prim.classList.remove("hidden");
+  if (sub) sub.classList.add("hidden");
+}
+document.getElementById("mode-gd").onclick = () => {
+  document.getElementById("mode-primary").classList.add("hidden");
+  document.getElementById("mode-gd-sub").classList.remove("hidden");
+};
+document.getElementById("gd-back").onclick = resetModeView;
 document.querySelectorAll(".diff-btn").forEach((b) => {
   b.onclick = () => {
     difficulty = b.dataset.diff;

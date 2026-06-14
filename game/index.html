@@ -80,23 +80,36 @@
           <h1>🎮 Spielmodus</h1>
           <span id="mode-dev" class="badge"></span>
         </div>
-        <p>Wie möchtest du üben? Der Lernstoff ist in beiden Modi gleich.</p>
-        <div class="mode-row">
+        <p>Wie möchtest du üben? Der Lernstoff ist in allen Modi gleich.</p>
+        <div class="mode-row" id="mode-primary">
           <button class="mode-btn" data-mode="obby">
             <span class="mode-ic">🧗</span>
             <span class="mode-name">Obby</span>
             <span class="mode-desc">Spring auf die Plattform mit der richtigen Antwort</span>
           </button>
-          <button class="mode-btn" data-mode="dash">
-            <span class="mode-ic">🔺</span>
-            <span class="mode-name">Cube Dash</span>
-            <span class="mode-desc">Geometry-Dash-Style: oben oder unten ausweichen</span>
+          <button class="mode-btn" id="mode-gd">
+            <span class="mode-ic">🎮</span>
+            <span class="mode-name">Geometry Dash</span>
+            <span class="mode-desc">Cube oder Wave – wähle deinen Stil</span>
           </button>
-          <button class="mode-btn" data-mode="wave">
-            <span class="mode-ic">🌊</span>
-            <span class="mode-name">Wave</span>
-            <span class="mode-desc">Raumschiff: halten = steigen, durch den richtigen Tunnel fliegen</span>
-          </button>
+        </div>
+        <div id="mode-gd-sub" class="hidden">
+          <h2>Cube oder Wave?</h2>
+          <div class="mode-row">
+            <button class="mode-btn" data-mode="dash">
+              <span class="mode-ic">🔺</span>
+              <span class="mode-name">Cube</span>
+              <span class="mode-desc">Würfel: oben oder unten ausweichen</span>
+            </button>
+            <button class="mode-btn" data-mode="wave">
+              <span class="mode-ic">🌊</span>
+              <span class="mode-name">Wave</span>
+              <span class="mode-desc">Raumschiff: durch den richtigen Tunnel fliegen</span>
+            </button>
+          </div>
+          <div class="btn-row">
+            <button id="gd-back" class="small-btn">↩ zurück zur Modus-Auswahl</button>
+          </div>
         </div>
       </div>
     </div>
