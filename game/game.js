@@ -70,6 +70,12 @@ const DASH = {
 };
 const DASH_SPEED = { easy: 4.2, medium: 5.4, hard: 6.8 };
 
+// ---- Wave (Geometry-Dash-Wave-Modus) ----
+let wave = null;
+const WAVE = { CX: 170, TOP: 74, BOT: 516, SZ: 20, APPROACH: 520, TUNNEL: 900, PAD: 360 };
+const WAVE_SPEED = { easy: 3.6, medium: 4.6, hard: 5.8 };
+const WAVE_SEC = WAVE.APPROACH + WAVE.TUNNEL;
+
 const keys = { left: false, right: false, jump: false };
 const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
@@ -197,18 +203,20 @@ function startSession(mode, topic, level) {
   resize();
   if (gameMode === "dash") {
     startDash(queue);
+  } else if (gameMode === "wave") {
+    startWave(queue);
   } else {
     applyDifficulty(difficulty);
     buildStage(session.queue[0]);
   }
 }
 
-// Touch-Steuerung je nach Modus: im Dash nur Springen (Laufpfeile aus)
+// Touch-Steuerung je nach Modus: in Dash/Wave nur eine Taste (Laufpfeile aus)
 function configureTouch() {
   const left = document.querySelector(".touch-left");
   const jump = document.querySelector(".tbtn.jump");
-  if (left) left.style.display = gameMode === "dash" ? "none" : "flex";
-  if (jump) jump.textContent = gameMode === "dash" ? "⤒ SPRINGEN" : "⤒ SPRUNG";
+  if (left) left.style.display = gameMode === "obby" ? "flex" : "none";
+  if (jump) jump.textContent = gameMode === "wave" ? "⤒ STEIGEN" : (gameMode === "dash" ? "⤒ SPRINGEN" : "⤒ SPRUNG");
 }
 
 /* ---------------------------------------------------------------------
@@ -274,6 +282,7 @@ function update() {
   animTime++;
   if (appState !== "playing") return;
   if (gameMode === "dash") { updateDash(); return; }
+  if (gameMode === "wave") { updateWave(); return; }
   if (!stage) return;
 
   if (player.locked) {
@@ -513,6 +522,222 @@ function dashFinish() {
   completeLevel(html);
 }
 
+/* =====================================================================
+   WAVE (Geometry-Dash-Wave-Modus)
+   Raumschiff sinkt diagonal; Taste halten -> steigt diagonal.
+   Pro Frage N Tunnel (= Antworten). Falsche enden in einer Wand -> Crash.
+   Tunnel-Reihenfolge wird bei JEDEM Versuch neu gemischt.
+   ===================================================================== */
+function startWave(questions) {
+  const n = Math.min(5, questions.length);
+  wave = {
+    questions: questions.slice(0, n),
+    speed: WAVE_SPEED[difficulty] || 4.6,
+    worldX: 0, attempt: 1,
+    ship: { y: (WAVE.TOP + WAVE.BOT) / 2 - WAVE.SZ / 2 },
+    dead: false, deadT: 0, lastExplain: "",
+    layouts: [], particles: [],
+    finishX: n * WAVE_SEC + WAVE.PAD,
+  };
+  waveBuildLayouts();
+}
+
+// Tunnel-Zuordnung (Band -> Antwort) zufällig – bei jedem Versuch neu
+function waveBuildLayouts() {
+  wave.layouts = wave.questions.map((q) => {
+    const order = shuffle(q.options.map((_, i) => i)); // Band b zeigt Antwort order[b]
+    return {
+      n: q.options.length,
+      labels: order.map((i) => q.options[i]),
+      correctBand: order.indexOf(q.correct),
+      judged: false,
+    };
+  });
+}
+
+function updateWave() {
+  if (!wave) return;
+  const s = wave.ship;
+  if (wave.dead) {
+    wave.deadT++;
+    for (const p of wave.particles) { p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life--; }
+    if (wave.deadT > 38) restartWave();
+    return;
+  }
+
+  const vy = wave.speed * 0.85;
+  s.y += keys.jump ? -vy : vy;
+  wave.worldX += wave.speed;
+
+  // Decke/Boden = Crash
+  if (s.y < WAVE.TOP || s.y + WAVE.SZ > WAVE.BOT) { waveDie(); return; }
+
+  const sec = Math.floor(wave.worldX / WAVE_SEC);
+  if (sec < wave.layouts.length) {
+    const secStart = sec * WAVE_SEC;
+    const tunnelStart = secStart + WAVE.APPROACH;
+    const tunnelEnd = tunnelStart + WAVE.TUNNEL;
+    const lay = wave.layouts[sec];
+    const laneH = (WAVE.BOT - WAVE.TOP) / lay.n;
+
+    // Im Tunnel: Trennwände (Crash beim Überqueren)
+    if (wave.worldX >= tunnelStart && wave.worldX <= tunnelEnd) {
+      for (let k = 1; k < lay.n; k++) {
+        const yk = WAVE.TOP + k * laneH;
+        if (s.y < yk && s.y + WAVE.SZ > yk) { waveDie(); return; }
+      }
+    }
+
+    // Tunnelende: im richtigen Band weiter, sonst Wand -> Crash
+    if (wave.worldX >= tunnelEnd && !lay.judged) {
+      lay.judged = true;
+      const band = Math.max(0, Math.min(lay.n - 1, Math.floor(((s.y + WAVE.SZ / 2) - WAVE.TOP) / laneH)));
+      const correct = (band === lay.correctBand);
+      Storage.recordAnswer(profile, wave.questions[sec], correct);
+      Storage.saveProfile(profile);
+      if (!correct) { wave.lastExplain = wave.questions[sec].explain || ""; waveDie(); return; }
+    }
+  }
+
+  if (wave.worldX >= wave.finishX) { waveFinish(); }
+}
+
+function waveDie() {
+  wave.dead = true; wave.deadT = 0;
+  const s = wave.ship;
+  wave.particles = [];
+  for (let i = 0; i < 16; i++) {
+    wave.particles.push({
+      x: WAVE.CX + WAVE.SZ / 2, y: s.y + WAVE.SZ / 2,
+      vx: (Math.random() - 0.5) * 11, vy: (Math.random() - 0.7) * 11, life: 30 + Math.random() * 12,
+    });
+  }
+}
+
+function restartWave() {
+  wave.dead = false; wave.deadT = 0; wave.lastExplain = "";
+  wave.worldX = 0; wave.attempt++;
+  wave.ship.y = (WAVE.TOP + WAVE.BOT) / 2 - WAVE.SZ / 2;
+  wave.particles = [];
+  waveBuildLayouts();   // Reihenfolge neu mischen!
+}
+
+function waveFinish() {
+  const html = "Versuche: <b>" + wave.attempt + "</b> · Tunnel: <b>" + wave.questions.length + "</b>";
+  wave = null;
+  completeLevel(html);
+}
+
+/* ---- Wave zeichnen ---- */
+function drawWave() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#1a0b3a"); g.addColorStop(1, "#2d0b5a");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  // Decke / Boden
+  ctx.fillStyle = "#0c0720";
+  ctx.fillRect(0, 0, W, WAVE.TOP); ctx.fillRect(0, WAVE.BOT, W, H - WAVE.BOT);
+  ctx.fillStyle = "#19e0ff";
+  ctx.fillRect(0, WAVE.TOP - 3, W, 3); ctx.fillRect(0, WAVE.BOT, W, 3);
+
+  const sec0 = Math.floor(wave.worldX / WAVE_SEC);
+  for (let sec = Math.max(0, sec0 - 1); sec <= sec0 + 1 && sec < wave.layouts.length; sec++) drawWaveSection(sec);
+
+  // Ziellinie
+  const fx = WAVE.CX + (wave.finishX - wave.worldX);
+  if (fx < W + 40) { ctx.fillStyle = "#7CFC00"; ctx.fillRect(fx, WAVE.TOP, 10, WAVE.BOT - WAVE.TOP); }
+
+  if (wave.dead) {
+    ctx.fillStyle = "#ffe14d";
+    for (const p of wave.particles) if (p.life > 0) ctx.fillRect(p.x - 4, p.y - 4, 8, 8);
+  } else {
+    drawShip();
+  }
+  drawWaveHud();
+}
+
+function drawWaveSection(sec) {
+  const lay = wave.layouts[sec];
+  const secStart = sec * WAVE_SEC;
+  const tunnelStart = secStart + WAVE.APPROACH;
+  const tunnelEnd = tunnelStart + WAVE.TUNNEL;
+  const laneH = (WAVE.BOT - WAVE.TOP) / lay.n;
+  const sx0 = WAVE.CX + (tunnelStart - wave.worldX);
+  const sx1 = WAVE.CX + (tunnelEnd - wave.worldX);
+
+  // Trennwände
+  ctx.fillStyle = "#19e0ff";
+  for (let k = 1; k < lay.n; k++) {
+    const yk = WAVE.TOP + k * laneH;
+    const a = Math.max(0, sx0), b = Math.min(W, sx1);
+    if (b > a) ctx.fillRect(a, yk - 3, b - a, 6);
+  }
+  // Endwände der FALSCHEN Bänder (kommen erst spät ins Bild -> verraten nichts)
+  for (let band = 0; band < lay.n; band++) {
+    if (band === lay.correctBand) continue;
+    const yTop = WAVE.TOP + band * laneH + 4, h = laneH - 8;
+    if (sx1 - 26 < W && sx1 > 0) {
+      ctx.fillStyle = "#ff3b6b";
+      ctx.fillRect(Math.max(0, sx1 - 26), yTop, 26, h);
+    }
+  }
+  // Antwort-Labels in der Anflugzone (offen, vor dem Tunnel)
+  const labelX = WAVE.CX + (secStart + WAVE.APPROACH * 0.5 - wave.worldX);
+  if (labelX > -260 && labelX < W + 260) {
+    for (let band = 0; band < lay.n; band++) {
+      const yc = WAVE.TOP + band * laneH + laneH / 2;
+      const w = Math.min(360, laneH > 90 ? 360 : 240);
+      ctx.fillStyle = "rgba(10,8,30,0.78)";
+      dashRoundRect(labelX - w / 2, yc - Math.min(22, laneH / 2 - 4), w, Math.min(44, laneH - 8), 8); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+      drawWrapped(lay.labels[band], labelX, yc + 4, w - 16, Math.min(40, laneH - 12), 16);
+      ctx.textAlign = "left";
+    }
+  }
+}
+
+function drawShip() {
+  const s = wave.ship, x = WAVE.CX, y = s.y, z = WAVE.SZ, up = keys.jump;
+  ctx.save();
+  ctx.translate(x + z / 2, y + z / 2);
+  ctx.rotate(up ? -0.5 : 0.5);
+  ctx.fillStyle = "#ffe14d"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(z / 2, 0); ctx.lineTo(-z / 2, -z / 2); ctx.lineTo(-z / 4, 0); ctx.lineTo(-z / 2, z / 2);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+
+function drawWaveHud() {
+  // alles im Deckenbereich (0..WAVE.TOP), damit das Schiff frei bleibt
+  const pct = Math.max(0, Math.min(1, wave.worldX / wave.finishX));
+  const bx = 150, by = 10, bw = W - 320;
+  ctx.fillStyle = "rgba(255,255,255,0.22)"; dashRoundRect(bx, by, bw, 12, 6); ctx.fill();
+  if (pct > 0) { ctx.fillStyle = "#19e0ff"; dashRoundRect(bx, by, bw * pct, 12, 6); ctx.fill(); }
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; dashRoundRect(bx, by, bw, 12, 6); ctx.stroke();
+  ctx.fillStyle = "#fff"; ctx.font = "bold 13px Trebuchet MS"; ctx.textAlign = "left";
+  ctx.fillText(Math.round(pct * 100) + "%", bx + bw + 10, by + 11);
+  ctx.fillText("VERSUCH " + wave.attempt, 12, by + 11);
+
+  if (wave.dead) {
+    if (wave.lastExplain) {
+      roundBlock(W / 2 - 330, 150, 660, 60, "rgba(8,6,30,0.92)");
+      ctx.fillStyle = "#ff8a80"; ctx.textAlign = "center"; ctx.font = "bold 20px Trebuchet MS";
+      ctx.fillText("Falsch!", W / 2, 144);
+      ctx.fillStyle = "#ffe08a"; drawWrapped("💡 " + wave.lastExplain, W / 2, 182, 630, 48, 16);
+      ctx.textAlign = "left";
+    }
+    return;
+  }
+  const sec = Math.floor(wave.worldX / WAVE_SEC);
+  const q = wave.questions[Math.min(sec, wave.questions.length - 1)];
+  if (q) {
+    ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+    drawWrapped(q.q, W / 2, 52, W - 40, 34, 18);
+    ctx.textAlign = "left";
+  }
+}
+
 /* ---- Cube Dash zeichnen ---- */
 function drawDash() {
   const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -658,6 +883,7 @@ function dashOptionBanner(hint, text, yc) {
    ------------------------------------------------------------------- */
 function draw() {
   if (appState === "playing" && gameMode === "dash" && dash) { drawDash(); return; }
+  if (appState === "playing" && gameMode === "wave" && wave) { drawWave(); return; }
   drawSky();
   drawClouds();
   if (appState === "playing" && gameMode === "obby" && stage) {
@@ -835,7 +1061,7 @@ function makeCard(icon, name, status, cls) {
 }
 function renderMap() {
   mapGrid.innerHTML = "";
-  mapDiff.textContent = (gameMode === "dash" ? "🔺 Cube Dash" : "🧗 Obby") + " · " + DIFF[difficulty].label;
+  mapDiff.textContent = (gameMode === "dash" ? "🔺 Cube Dash" : gameMode === "wave" ? "🌊 Wave" : "🧗 Obby") + " · " + DIFF[difficulty].label;
 
   const due = dueCountTotal();
   const adaptive = makeCard("🎯", "Übungs-Mix",
@@ -929,7 +1155,7 @@ function selectModeUI() {
   document.querySelectorAll(".mode-btn[data-mode]").forEach((b) =>
     b.classList.toggle("selected", b.dataset.mode === gameMode));
   const badge = document.getElementById("menu-mode");
-  if (badge) badge.textContent = gameMode === "dash" ? "🔺 Cube Dash" : "🧗 Obby";
+  if (badge) badge.textContent = gameMode === "dash" ? "🔺 Cube Dash" : gameMode === "wave" ? "🌊 Wave" : "🧗 Obby";
 }
 function updateConsentStatus() {
   const el = document.getElementById("consent-status");
@@ -990,7 +1216,7 @@ canvas.addEventListener("touchstart", (e) => {
   e.preventDefault();
   const r = canvas.getBoundingClientRect();
   for (const t of e.changedTouches) {
-    if (gameMode === "dash") { jumpTouches.add(t.identifier); keys.jump = true; continue; }
+    if (gameMode === "dash" || gameMode === "wave") { jumpTouches.add(t.identifier); keys.jump = true; continue; }
     const cx = (t.clientX - r.left) * (W / r.width);
     if (cx > W / 2) { jumpTouches.add(t.identifier); keys.jump = true; }
   }

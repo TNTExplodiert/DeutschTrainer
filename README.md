@@ -36,8 +36,9 @@ Roblox-Stil** (Idee #5 aus den Spielideen):
 > falsche Plattformen brechen weg!
 
 **Funktionen:**
-- 🎮 **Zwei Spielmodi**: **Obby** (auf die richtige Plattform springen) und
-  **Cube Dash** (Geometry-Dash-Stil: Würfel rennt, oben/unten = Antwort wählen)
+- 🎮 **Drei Spielmodi**: **Obby** (auf die richtige Plattform springen),
+  **Cube Dash** (Geometry-Dash-Stil: oben/unten) und **Wave** (Raumschiff durch
+  den richtigen Tunnel – falsche Tunnel enden in einer Wand)
 - ⭐ **10 Level/Sterne pro Thema** zum Sammeln (nach hinten kniffliger)
 - 🧠 **1000+ Übungen** in 18 Themen – auch **Erkennen in echten Sätzen**
   (Adverbiale, Fälle, Artikel, Zeitformen), **Kommasetzung** und
