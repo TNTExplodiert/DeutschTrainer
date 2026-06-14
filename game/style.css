@@ -112,6 +112,7 @@ canvas {
   padding: 26px 28px;
   max-width: 560px;
   width: 100%;
+  margin: auto;            /* zentriert, aber bei zu hohem Inhalt nach oben scrollbar */
   text-align: center;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
 }
@@ -177,7 +178,13 @@ canvas {
 .diff-btn.selected { border-color: #ffd34d; background: #434c69; transform: scale(1.05); }
 
 /* Levelkarte */
-.map-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.map-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  position: sticky; top: 0; z-index: 3;     /* Kopf mit Zurück-Button bleibt immer sichtbar */
+  background: #262c3d;
+  padding: 6px 0 10px;
+  box-shadow: 0 6px 8px -4px rgba(0, 0, 0, 0.45);
+}
 .map-head h1 { flex: 1; margin: 0; font-size: 26px; }
 .badge { background: #434c69; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; }
 
