@@ -630,6 +630,15 @@ function updateWave() {
     waveDie(); return;
   }
 
+  // Nine: Sägeblatt-Hindernisse im Anflug (Crash bei Berührung)
+  if (wave.nine) {
+    for (const o of waveObstacles(sec)) {
+      const dx = wave.worldX - o.x, dy = (s.y + WAVE.SZ / 2) - o.y;
+      const rr = o.r * 0.78 + WAVE.SZ * 0.3;
+      if (dx * dx + dy * dy < rr * rr) { wave.lastExplain = ""; waveDie(); return; }
+    }
+  }
+
   if (lay) {
     const laneH = (WAVE.BOT - WAVE.TOP) / lay.n;
 
@@ -769,6 +778,14 @@ function drawWaveSection(sec) {
       }
     }
   }
+
+  // Nine: Sägeblätter zeichnen
+  if (wave.nine) {
+    for (const o of waveObstacles(sec)) {
+      const osx = WAVE.CX + (o.x - wave.worldX);
+      if (osx > -50 && osx < W + 50) drawSawblade(osx, o.y, o.r);
+    }
+  }
 }
 
 function drawWaveTrail() {
@@ -782,6 +799,37 @@ function drawWaveTrail() {
   }
   ctx.strokeStyle = "rgba(255,225,77,0.45)"; ctx.lineWidth = 7; ctx.stroke();
   ctx.strokeStyle = "#ffe14d"; ctx.lineWidth = 2.5; ctx.stroke();
+}
+
+// Feste (lernbare) Sägeblatt-Hindernisse im Anflug – nur im NINE-Level
+function waveObstacles(sec) {
+  if (!wave || !wave.nine || sec < 0 || sec >= wave.layouts.length) return [];
+  const base = sec * wave.sec;
+  const top = WAVE.TOP, h = WAVE.BOT - WAVE.TOP;
+  const out = [];
+  const xs = [700, 1250, 1800];   // im Anflug; letzte ~600px bleiben frei zum Positionieren
+  for (let i = 0; i < xs.length; i++) {
+    const hi = ((sec + i) % 2 === 0);
+    out.push({ x: base + xs[i], y: top + (hi ? 0.30 : 0.70) * h, r: 26 });
+  }
+  return out;
+}
+function drawSawblade(cx, cy, r) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(animTime * 0.08);
+  ctx.fillStyle = "#ff7b00";
+  const teeth = 9;
+  ctx.beginPath();
+  for (let i = 0; i < teeth * 2; i++) {
+    const ang = Math.PI * i / teeth;
+    const rr = (i % 2 === 0) ? r : r * 0.7;
+    ctx.lineTo(Math.cos(ang) * rr, Math.sin(ang) * rr);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = "#1a0a00"; ctx.beginPath(); ctx.arc(cx, cy, r * 0.5, 0, 7); ctx.fill();
+  ctx.strokeStyle = "#ff7b00"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, r * 0.22, 0, 7); ctx.stroke();
 }
 
 function drawShip() {

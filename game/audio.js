@@ -13,6 +13,37 @@ const GameAudio = (function () {
   let noiseBuf = null;
   const LOOK = 0.12, INT = 25;
 
+  // Optionale echte Nine-Circles-Datei: ablegen unter game/assets/nine.mp3
+  // (vom Nutzer hinzuzufügen). Start bei 2:23. Sonst spielt der Synth-Fallback.
+  const NINE_URL = "assets/nine.mp3";
+  const NINE_START = 143;
+  let nineEl = null, realNine = false;
+  function ensureNineEl() {
+    if (nineEl !== null) return;
+    try {
+      nineEl = new Audio();
+      nineEl.src = NINE_URL;
+      nineEl.preload = "auto";
+      nineEl.addEventListener("ended", function () {
+        try { nineEl.currentTime = NINE_START; nineEl.play(); } catch (e) {}
+      });
+    } catch (e) { nineEl = false; }
+  }
+  function startNineTrack() {
+    ensureNineEl();
+    if (!nineEl) return;
+    try {
+      nineEl.muted = muted;
+      nineEl.volume = 0.6;
+      nineEl.currentTime = NINE_START;
+      nineEl.play().then(function () { realNine = true; }).catch(function () { realNine = false; });
+    } catch (e) { realNine = false; }
+  }
+  function stopNineTrack() {
+    realNine = false;
+    if (nineEl) { try { nineEl.pause(); } catch (e) {} }
+  }
+
   function ensure() {
     if (ctx) { if (ctx.state === "suspended") ctx.resume(); return; }
     try {
@@ -88,6 +119,7 @@ const GameAudio = (function () {
 
   function schedStep(s, t) {
     if (style === "nine") {
+      if (realNine) return;   // echte Datei läuft -> keinen Synth dazumischen
       if (s % 4 === 0) kick(t);
       if (s % 8 === 4) snare(t);
       hat(t, s % 2 === 0 ? 0.06 : 0.15);
@@ -151,6 +183,7 @@ const GameAudio = (function () {
     if (which === "techno") { baseBpm = 124; maxBpm = 152; ramp = 0.05; loopLen = 16; }
     else if (which === "nine") { baseBpm = 174; maxBpm = 204; ramp = 0.05; loopLen = 16; }
     else { baseBpm = 150; maxBpm = 150; ramp = 0; loopLen = 32; }
+    if (which === "nine") startNineTrack(); else stopNineTrack();
     if (style === which && timer) { if (ctx.state === "suspended") ctx.resume(); return; }
     style = which; step = 0; bpm = baseBpm; spb = 60 / bpm / 4;
     nextTime = ctx.currentTime + 0.06;
@@ -159,11 +192,12 @@ const GameAudio = (function () {
   }
   // Musik von vorn + Basistempo (z. B. nach einem Crash)
   function restart() {
+    if (realNine && nineEl) { try { nineEl.currentTime = NINE_START; nineEl.play(); } catch (e) {} return; }
     if (!ctx || !timer) return;
     step = 0; bpm = baseBpm; spb = 60 / bpm / 4; nextTime = ctx.currentTime + 0.04;
   }
-  function stop() { if (timer) { clearInterval(timer); timer = null; } style = null; }
-  function setMuted(m) { muted = !!m; if (master) master.gain.value = muted ? 0 : 0.5; }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } style = null; stopNineTrack(); }
+  function setMuted(m) { muted = !!m; if (master) master.gain.value = muted ? 0 : 0.5; if (nineEl) try { nineEl.muted = muted; } catch (e) {} }
   function isMuted() { return muted; }
 
   return { ensure, play, restart, stop, setMuted, isMuted, sfx };

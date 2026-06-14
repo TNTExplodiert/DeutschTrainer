@@ -64,7 +64,10 @@ Datei [`game/audio.js`](game/audio.js)) – es gibt **keine externen Audiodateie
   (Neustart des Tempos nach jedem Crash) + **Crash-Sound**
 - **Obby:** fröhliche **Original-Chiptune im Mario-Stil** + **Fehler-Sound** bei falscher Antwort
 - **Bonus-Level „NINE":** intensiver, schneller **Original-Track im Nine-Circles-Stil**
-  (NICHT der echte, urheberrechtlich geschützte Nine-Circles-Song)
+  (NICHT der echte, urheberrechtlich geschützte Nine-Circles-Song). Optional kann man
+  eine eigene Datei `game/assets/nine.mp3` hinterlegen – sie wird dann ab **2:23** abgespielt
+  (siehe [`game/assets/README.md`](game/assets/README.md)).
+- **NINE-Level-Hindernisse:** zwischen den Fragen rotierende **Sägeblätter** zum Ausweichen (Geometry-Dash-Stil)
 
 **Lizenz:** Die Musik ist eine **eigene Komposition** dieses Projekts und damit
 **lizenz-/gebührenfrei** nutzbar. Es werden **keine** urheberrechtlich geschützten
