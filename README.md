@@ -43,6 +43,7 @@ Roblox-Stil** (Idee #5 aus den Spielideen):
   (Adverbiale, Fälle, Artikel, Zeitformen), **Kommasetzung** und
   **Satzverbindung/Umstellung** (zwei Hauptsätze → Haupt-/Nebensatz)
 - 💡 **Erklärungen** bei falschen Antworten
+- 📊 **Profil-/Statistikseite**: zeigt pro Thema Genauigkeit, Sterne und deine **schwächsten Themen**
 - 📱 **Responsive** – passt sich automatisch der Fenster-/Tab-Größe an
 - 🖥️ **Geräteauswahl** (PC/Tablet/Handy) – Steuerung passt sich an
 - 🟢🟡🔴 **Schwierigkeitsgrade**: Leicht / Mittel / Schwer (steuern das **Gameplay-Tempo**)

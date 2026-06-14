@@ -124,6 +124,7 @@
         <div class="map-head">
           <button id="map-back" class="small-btn">↩ Menü</button>
           <h1>🗺️ Levelkarte</h1>
+          <button id="map-stats" class="small-btn">📊 Profil</button>
           <span id="map-diff" class="badge"></span>
         </div>
         <p class="small">Wähle ein Thema. ⭐ = gemeistert · ⚠️ = noch üben. Falsch gelöste Aufgaben kommen wieder, bis du sie kannst.</p>
@@ -141,6 +142,24 @@
         </div>
         <p class="small">Sammle pro Thema <b>10 Sterne</b> ⭐. Die Level werden nach hinten kniffliger.</p>
         <div id="levels-grid" class="map-grid"></div>
+      </div>
+    </div>
+
+    <!-- Profil / Statistik -->
+    <div id="overlay-stats" class="overlay hidden">
+      <div class="panel wide">
+        <div class="map-head">
+          <button id="stats-back" class="small-btn">↩ Karte</button>
+          <h1>📊 Dein Profil</h1>
+          <span id="stats-stars" class="badge"></span>
+        </div>
+        <p class="small" id="stats-summary"></p>
+        <div id="stats-weak" class="stats-weak"></div>
+        <div id="stats-list"></div>
+        <div class="btn-row">
+          <button id="stats-practice" class="big-btn yellow">🎯 Übungs-Mix starten</button>
+          <button id="stats-reset" class="big-btn grey">🗑️ Fortschritt zurücksetzen</button>
+        </div>
       </div>
     </div>
 

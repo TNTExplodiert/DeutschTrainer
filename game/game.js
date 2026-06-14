@@ -21,6 +21,7 @@ const overlays = {
   menu: document.getElementById("overlay-menu"),
   map: document.getElementById("overlay-map"),
   levels: document.getElementById("overlay-levels"),
+  stats: document.getElementById("overlay-stats"),
   levelcomplete: document.getElementById("overlay-levelcomplete"),
 };
 const mapGrid = document.getElementById("map-grid");
@@ -868,6 +869,55 @@ function openLevels(topic) {
   showState("levels");
 }
 
+// ---- Profil / Statistik ----
+function topicStatRow(topic) {
+  const t = profile.topics[topic] || { correct: 0, wrong: 0 };
+  const ans = t.correct + t.wrong;
+  return { topic, stars: starCount(topic), correct: t.correct, wrong: t.wrong,
+    ans, acc: ans ? t.correct / ans : null, due: dueCountForTopic(topic) };
+}
+function renderStats() {
+  const rows = TOPIC_ORDER.map(topicStatRow);
+  let totalStars = 0, C = 0, Wc = 0;
+  rows.forEach((s) => { totalStars += s.stars; C += s.correct; Wc += s.wrong; });
+  const ans = C + Wc, accPct = ans ? Math.round(100 * C / ans) : 0;
+  const maxStars = TOPIC_ORDER.length * LEVELS_PER_TOPIC;
+  document.getElementById("stats-stars").textContent = "⭐ " + totalStars + "/" + maxStars;
+  document.getElementById("stats-summary").innerHTML =
+    "Beantwortet: <b>" + ans + "</b> · Richtig: <b>" + C + "</b> (" + accPct + "%) · gesammelte Sterne: <b>" + totalStars + "</b>";
+
+  const weak = rows.filter((s) => s.due > 0 || (s.ans > 0 && s.acc < 0.8))
+    .sort((a, b) => (a.acc == null ? 1 : a.acc) - (b.acc == null ? 1 : b.acc));
+  document.getElementById("stats-weak").innerHTML = weak.length
+    ? "🔧 <b>Daran solltest du üben:</b> " + weak.slice(0, 5).map((s) => TOPIC_INFO[s.topic].name).join(", ")
+    : (ans ? "🎉 Stark! Aktuell keine deutlichen Schwächen." : "Spiel ein paar Level – dann zeige ich dir hier deine Schwächen.");
+
+  // schwächste zuerst, dann ungeübte, dann gemeisterte
+  const score = (s) => (s.stars >= LEVELS_PER_TOPIC ? 3 : (s.ans === 0 ? 1.2 : s.acc));
+  rows.sort((a, b) => score(a) - score(b));
+  const list = document.getElementById("stats-list");
+  list.innerHTML = "";
+  for (const s of rows) {
+    const info = TOPIC_INFO[s.topic];
+    const pct = s.ans ? Math.round(100 * s.acc) : 0;
+    const cls = s.stars >= LEVELS_PER_TOPIC ? "mastered" : ((s.due > 0 || (s.ans > 0 && s.acc < 0.8)) ? "weak" : "");
+    const bar = s.ans === 0 ? "#555f78" : (s.acc >= 0.9 ? "#4caf50" : s.acc >= 0.7 ? "#ffd34d" : "#ff7043");
+    const div = document.createElement("div");
+    div.className = "stat-row" + (cls ? " " + cls : "");
+    div.innerHTML =
+      "<span class='stat-name'>" + info.icon + " " + info.name + "</span>" +
+      "<span class='stat-stars'>⭐" + s.stars + "/" + LEVELS_PER_TOPIC + "</span>" +
+      "<span class='stat-bar'><span style='width:" + (s.ans ? pct : 0) + "%;background:" + bar + "'></span></span>" +
+      "<span class='stat-acc'>" + (s.ans ? pct + "% (" + s.correct + "/" + s.ans + ")" : "—") + (s.due ? " ⚠️" + s.due : "") + "</span>";
+    list.appendChild(div);
+  }
+  showState("stats");
+}
+function resetProgress() {
+  profile.topics = {}; profile.due = {}; profile.completed = {}; profile.stars = {};
+  Storage.saveProfile(profile);
+}
+
 /* ---------------------------------------------------------------------
    Schwierigkeits-Auswahl im Menü
    ------------------------------------------------------------------- */
@@ -1004,6 +1054,14 @@ document.querySelectorAll(".diff-btn").forEach((b) => {
 document.getElementById("menu-back").onclick = () => { selectModeUI(); showState("mode"); };
 document.getElementById("goto-map").onclick = () => { renderMap(); showState("map"); };
 document.getElementById("map-back").onclick = () => { selectDifficultyUI(); selectModeUI(); showState("menu"); };
+document.getElementById("map-stats").onclick = () => renderStats();
+document.getElementById("stats-back").onclick = () => { renderMap(); showState("map"); };
+document.getElementById("stats-practice").onclick = () => startSession("adaptive", null, null);
+document.getElementById("stats-reset").onclick = () => {
+  if (typeof confirm === "function" && !confirm("Wirklich den ganzen Fortschritt (Sterne & Statistik) löschen?")) return;
+  resetProgress();
+  renderStats();
+};
 document.getElementById("levels-back").onclick = () => { renderMap(); showState("map"); };
 document.getElementById("lc-again").onclick = () => startSession(session.mode, session.topic, session.level);
 document.getElementById("lc-next").onclick = () => {
