@@ -20,10 +20,15 @@ const overlays = {
   mode: document.getElementById("overlay-mode"),
   menu: document.getElementById("overlay-menu"),
   map: document.getElementById("overlay-map"),
+  levels: document.getElementById("overlay-levels"),
   levelcomplete: document.getElementById("overlay-levelcomplete"),
 };
 const mapGrid = document.getElementById("map-grid");
 const mapDiff = document.getElementById("map-diff");
+const levelsGrid = document.getElementById("levels-grid");
+
+const LEVELS_PER_TOPIC = 10;
+const KIND_RANK = { mc: 0, recognize: 1, comma: 1, transform: 2 };
 
 // ---- Schwierigkeitsgrade (Physik) ----
 const DIFF = {
@@ -114,13 +119,14 @@ function dueCountForTopic(topic) {
 function dueCountTotal() {
   return Object.keys(profile.due).filter((id) => QUESTION_BY_ID[id]).length;
 }
+function starCount(topic) { return Object.keys(profile.stars[topic] || {}).length; }
 function topicStatus(topic) {
-  const t = profile.topics[topic];
+  const stars = starCount(topic);
   const due = dueCountForTopic(topic);
-  if (profile.completed[topic] && due === 0) return { cls: "mastered", label: "⭐ Gemeistert" };
-  if (due > 0 || (t && t.wrong > t.correct)) return { cls: "weak", label: "⚠️ Üben" + (due ? " (" + due + ")" : "") };
-  if (t) return { cls: "", label: "In Arbeit" };
-  return { cls: "", label: "Neu" };
+  let cls = "";
+  if (stars >= LEVELS_PER_TOPIC) cls = "mastered";
+  else if (due > 0) cls = "weak";
+  return { cls, label: "⭐ " + stars + "/" + LEVELS_PER_TOPIC + (due > 0 ? "  ⚠️" + due : "") };
 }
 function weakTopics() {
   return TOPIC_ORDER.filter((t) => {
@@ -142,6 +148,21 @@ function shuffle(arr) {
 function buildTopicQueue(topic) {
   return shuffle(questionsByTopic(topic).slice());
 }
+// Fragen eines Themas nach Schwierigkeit sortieren (mc < erkennen < umformen)
+function sortedTopicPool(topic) {
+  return questionsByTopic(topic).slice().sort((a, b) =>
+    (KIND_RANK[a.kind] || 0) - (KIND_RANK[b.kind] || 0));
+}
+// Level k (1..10): ein fester, nach hinten kniffligerer Ausschnitt der Fragen
+function buildLevelQueue(topic, level) {
+  const pool = sortedTopicPool(topic);
+  const n = pool.length;
+  const size = Math.max(4, Math.min(8, Math.round(n / LEVELS_PER_TOPIC)));
+  const start = Math.floor((level - 1) * n / LEVELS_PER_TOPIC);
+  const q = [];
+  for (let i = 0; i < size && i < n; i++) q.push(pool[(start + i) % n]);
+  return shuffle(q);
+}
 function buildAdaptiveQueue() {
   // 1) alle noch fälligen (falsch gelösten) Fragen
   let qs = Object.keys(profile.due).map((id) => QUESTION_BY_ID[id]).filter(Boolean);
@@ -160,10 +181,10 @@ function buildAdaptiveQueue() {
   return qs.slice(0, 12);
 }
 
-function startSession(mode, topic) {
-  const queue = mode === "topic" ? buildTopicQueue(topic) : buildAdaptiveQueue();
+function startSession(mode, topic, level) {
+  const queue = mode === "topic" ? buildLevelQueue(topic, level) : buildAdaptiveQueue();
   session = {
-    mode, topic,
+    mode, topic, level: level || null,
     queue,
     total: queue.length,
     askedWrong: new Set(),
@@ -196,18 +217,24 @@ function buildStage(question) {
   // Antwortoptionen mischen, damit die richtige Plattform nicht immer gleich liegt
   const opts = shuffle(question.options.map((label, i) => ({ label, correct: i === question.correct })));
   const n = opts.length;
+  const isLong = question.kind === "transform";   // lange Antworten -> breitere Plattformen
 
   const checkpoint = { x: 40, y: PLATFORM_Y, w: 170, h: 40, type: "ground" };
-  const exit = { x: 560, y: PLATFORM_Y, w: 360, h: 40, type: "exit" };
+  const exit = isLong
+    ? { x: 730, y: PLATFORM_Y, w: 200, h: 40, type: "exit" }
+    : { x: 560, y: PLATFORM_Y, w: 360, h: 40, type: "exit" };
 
-  const zoneStart = 250, zoneEnd = 500;
-  const pw = Math.min(120, (zoneEnd - zoneStart - (n - 1) * 25) / n);
+  const zoneStart = isLong ? 240 : 250;
+  const zoneEnd = isLong ? 700 : 500;
+  const ph = isLong ? 64 : 36;
+  const maxPw = isLong ? 220 : 120;
+  const pw = Math.min(maxPw, (zoneEnd - zoneStart - (n - 1) * 30) / n);
   const gap = (zoneEnd - zoneStart - n * pw) / (n - 1 || 1);
 
   const answers = [];
   for (let i = 0; i < n; i++) {
     answers.push({
-      x: zoneStart + i * (pw + gap), y: PLATFORM_Y, w: pw, h: 36, type: "answer",
+      x: zoneStart + i * (pw + gap), y: PLATFORM_Y + 36 - ph, w: pw, h: ph, type: "answer",
       label: opts[i].label, correct: opts[i].correct, state: "idle", breakT: 0,
     });
   }
@@ -331,7 +358,7 @@ function onLand(p) {
     player.face = "ouch";
     player.vx = 0; player.vy = -4;
     player.locked = true;
-    showFeedback("Falsch! Kommt später nochmal …", "#ff5252");
+    showFeedback("Falsch! Kommt später nochmal …", "#ff5252", stage.q.explain);
   }
 }
 
@@ -340,23 +367,33 @@ function advanceAfterExit() {
   else buildStage(session.queue[0]);
 }
 
-function finishLevel() {
-  if (session.mode === "topic") profile.completed[session.topic] = true;
+function completeLevel(statsHTML) {
+  // Stern vergeben (nur im Themen-/Level-Modus)
+  if (session.mode === "topic" && session.level) {
+    profile.stars[session.topic] = profile.stars[session.topic] || {};
+    profile.stars[session.topic][session.level] = true;
+    if (starCount(session.topic) >= LEVELS_PER_TOPIC) profile.completed[session.topic] = true;
+  }
   Storage.saveProfile(profile);
 
-  const titleEl = document.getElementById("lc-title");
-  const statsEl = document.getElementById("lc-stats");
-  titleEl.textContent = session.mode === "topic"
-    ? "🏆 " + (TOPIC_INFO[session.topic] ? TOPIC_INFO[session.topic].name : session.topic) + " geschafft!"
+  const tn = TOPIC_INFO[session.topic] ? TOPIC_INFO[session.topic].name : session.topic;
+  document.getElementById("lc-title").textContent = session.mode === "topic"
+    ? "🏆 " + tn + " · Level " + session.level + " ⭐"
     : "🏆 Übungs-Mix geschafft!";
-  statsEl.innerHTML =
-    "Richtig beim 1. Versuch: <b>" + session.correctFirstTry + " von " + session.total + "</b><br>" +
-    "Versuche gesamt: <b>" + session.attempts + "</b>";
-  stage = null;
+  document.getElementById("lc-stats").innerHTML = statsHTML;
+  document.getElementById("lc-next").classList.toggle(
+    "hidden", !(session.mode === "topic" && session.level < LEVELS_PER_TOPIC));
   showState("levelcomplete");
 }
 
-function showFeedback(text, color) { feedback = { text, color, t: 90 }; }
+function finishLevel() {
+  const html = "Richtig beim 1. Versuch: <b>" + session.correctFirstTry + " von " + session.total + "</b><br>" +
+    "Versuche gesamt: <b>" + session.attempts + "</b>";
+  stage = null;
+  completeLevel(html);
+}
+
+function showFeedback(text, color, explain) { feedback = { text, color, t: explain ? 150 : 90, explain: explain || "" }; }
 
 /* =====================================================================
    CUBE DASH (Geometry-Dash-Modus)
@@ -377,6 +414,7 @@ function startDash(questions) {
       top: topIsCorrect ? correct : wrong,
       bottom: topIsCorrect ? wrong : correct,
       correctIsTop: topIsCorrect,
+      long: q.kind === "transform",
       judged: false,
     };
   });
@@ -386,7 +424,7 @@ function startDash(questions) {
     worldX: 0,
     attempt: 1,
     cube: { y: DASH.GROUND_Y - DASH.CUBE, vy: 0, onGround: true, rot: 0 },
-    dead: false, deadT: 0,
+    dead: false, deadT: 0, lastExplain: "",
     finishX: gates.length * DASH.SEG_LEN + DASH.FINISH_PAD,
     particles: [],
   };
@@ -439,7 +477,7 @@ function updateDash() {
       const correct = (choseTop === g.correctIsTop);
       Storage.recordAnswer(profile, g.q, correct);
       Storage.saveProfile(profile);
-      if (!correct) { dashDie(); return; }
+      if (!correct) { dash.lastExplain = g.q.explain || ""; dashDie(); return; }
     }
   }
 
@@ -460,7 +498,7 @@ function dashDie() {
 }
 
 function restartDash() {
-  dash.dead = false; dash.deadT = 0;
+  dash.dead = false; dash.deadT = 0; dash.lastExplain = "";
   dash.worldX = 0; dash.attempt++;
   for (const g of dash.gates) g.judged = false;
   dash.cube.y = DASH.GROUND_Y - DASH.CUBE;
@@ -469,14 +507,9 @@ function restartDash() {
 }
 
 function dashFinish() {
-  if (session.mode === "topic") profile.completed[session.topic] = true;
-  Storage.saveProfile(profile);
-  document.getElementById("lc-title").textContent = "🏆 Level geschafft!";
-  document.getElementById("lc-stats").innerHTML =
-    (session.mode === "topic" && TOPIC_INFO[session.topic] ? TOPIC_INFO[session.topic].name : "Übungs-Mix") +
-    "<br>Versuche: <b>" + dash.attempt + "</b> · Tore: <b>" + dash.gates.length + "</b>";
+  const html = "Versuche: <b>" + dash.attempt + "</b> · Tore: <b>" + dash.gates.length + "</b>";
   dash = null;
-  showState("levelcomplete");
+  completeLevel(html);
 }
 
 /* ---- Cube Dash zeichnen ---- */
@@ -530,13 +563,15 @@ function drawDashGate(i) {
   // gestrichelter Balken (wie in Geometry Dash)
   ctx.fillStyle = "#ffffff";
   for (let x = sx0; x < sx1 - 14; x += 26) ctx.fillRect(x, DASH.BAR_Y, 14, DASH.BAR_H);
-  // Antwort-Labels
-  ctx.textAlign = "center";
-  ctx.font = "bold 22px Trebuchet MS";
-  const cx = (sx0 + sx1) / 2;
-  dashLabel(g.top, cx, DASH.BAR_Y - 22);
-  dashLabel(g.bottom, cx, DASH.GROUND_Y - 16);
-  ctx.textAlign = "left";
+  // Kurze Antwort-Labels direkt am Balken (lange Antworten zeigt das HUD als Banner)
+  if (!g.long) {
+    ctx.textAlign = "center";
+    ctx.font = "bold 22px Trebuchet MS";
+    const cx = (sx0 + sx1) / 2;
+    dashLabel(g.top, cx, DASH.BAR_Y - 22);
+    dashLabel(g.bottom, cx, DASH.GROUND_Y - 16);
+    ctx.textAlign = "left";
+  }
 }
 
 function dashLabel(text, x, y) {
@@ -583,12 +618,38 @@ function drawDashHud() {
   ctx.font = "bold 18px Trebuchet MS";
   ctx.fillText("VERSUCH " + dash.attempt, bx, by + 46);
 
+  // Crash: Erklärung anzeigen
+  if (dash.dead) {
+    if (dash.lastExplain) {
+      roundBlock(W / 2 - 330, 150, 660, 60, "rgba(8,16,40,0.92)");
+      ctx.fillStyle = "#ff8a80"; ctx.textAlign = "center"; ctx.font = "bold 20px Trebuchet MS";
+      ctx.fillText("Falsch!", W / 2, 144);
+      ctx.fillStyle = "#ffe08a";
+      drawWrapped("💡 " + dash.lastExplain, W / 2, 182, 630, 48, 16);
+      ctx.textAlign = "left";
+    }
+    return;
+  }
+
   const next = dash.gates.find((g) => !g.judged);
   if (next) {
-    ctx.textAlign = "center"; ctx.font = "bold 24px Trebuchet MS";
-    dashLabel(next.q.q, W / 2, 118);
+    roundBlock(W / 2 - 360, 86, 720, 50, "rgba(8,30,90,0.72)");
+    ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+    drawWrapped(next.q.q, W / 2, 111, 690, 40, 20);
     ctx.textAlign = "left";
+    if (next.long) {
+      dashOptionBanner("⬆ SPRINGEN", next.top, 168);
+      dashOptionBanner("⬇ UNTEN BLEIBEN", next.bottom, 372);
+    }
   }
+}
+function dashOptionBanner(hint, text, yc) {
+  roundBlock(W / 2 - 360, yc - 26, 720, 54, "rgba(10,20,45,0.8)");
+  ctx.fillStyle = "#9fd0ff"; ctx.textAlign = "center"; ctx.font = "bold 12px Trebuchet MS";
+  ctx.fillText(hint, W / 2, yc - 13);
+  ctx.fillStyle = "#fff";
+  drawWrapped(text, W / 2, yc + 8, 690, 32, 17);
+  ctx.textAlign = "left";
 }
 
 /* ---------------------------------------------------------------------
@@ -611,9 +672,14 @@ function draw() {
       ctx.font = "bold 30px Trebuchet MS";
       ctx.textAlign = "center";
       ctx.lineWidth = 5; ctx.strokeStyle = "rgba(0,0,0,0.5)";
-      ctx.strokeText(feedback.text, W / 2, 130);
+      ctx.strokeText(feedback.text, W / 2, 128);
       ctx.fillStyle = feedback.color;
-      ctx.fillText(feedback.text, W / 2, 130);
+      ctx.fillText(feedback.text, W / 2, 128);
+      if (feedback.explain) {
+        roundBlock(W / 2 - 330, 144, 660, 52, "rgba(20,24,36,0.88)");
+        ctx.fillStyle = "#ffe08a";
+        drawWrapped("💡 " + feedback.explain, W / 2, 170, 630, 44, 16);
+      }
       ctx.textAlign = "left";
     }
   }
@@ -664,7 +730,7 @@ function drawAnswer(a) {
   roundBlock(a.x, a.y + dy, a.w, a.h, color);
   drawStuds(a.x, a.y + dy, a.w);
   ctx.fillStyle = "#fff"; ctx.textAlign = "center";
-  fitText(a.label, a.x + a.w / 2, a.y + dy + a.h / 2, a.w - 10);
+  drawWrapped(a.label, a.x + a.w / 2, a.y + dy + a.h / 2 + 4, a.w - 12, a.h - 12, 15);
   ctx.textAlign = "left"; ctx.globalAlpha = 1;
 }
 function roundBlock(x, y, w, h, color) {
@@ -682,6 +748,32 @@ function drawStuds(x, y, w) {
   ctx.fillStyle = "rgba(255,255,255,0.35)";
   const studs = Math.max(2, Math.floor(w / 26)); const step = w / studs;
   for (let i = 0; i < studs; i++) { ctx.beginPath(); ctx.arc(x + step * (i + 0.5), y + 6, 4, 0, 7); ctx.fill(); }
+}
+// Mehrzeiliger Umbruch (berücksichtigt \n), Schrift schrumpft bis es in maxH passt
+function wrapLines(text, maxW) {
+  const out = [];
+  for (const para of String(text).split("\n")) {
+    const words = para.split(" ");
+    let cur = "";
+    for (const w of words) {
+      const test = cur ? cur + " " + w : w;
+      if (ctx.measureText(test).width <= maxW || !cur) cur = test;
+      else { out.push(cur); cur = w; }
+    }
+    out.push(cur);
+  }
+  return out;
+}
+function drawWrapped(text, cx, cyCenter, maxW, maxH, startSize) {
+  let size = startSize || 15, lines = [];
+  for (; size >= 9; size--) {
+    ctx.font = "bold " + size + "px Trebuchet MS";
+    lines = wrapLines(text, maxW);
+    if (lines.length * (size + 3) <= maxH) break;
+  }
+  const lh = size + 3;
+  let y = cyCenter - (lines.length - 1) * lh / 2 + size * 0.35;
+  for (const l of lines) { ctx.fillText(l, cx, y); y += lh; }
 }
 function fitText(text, cx, cy, maxW) {
   let size = 15; ctx.font = `bold ${size}px Trebuchet MS`;
@@ -719,15 +811,16 @@ function drawPlayer() {
   ctx.stroke();
 }
 function drawHud() {
-  roundBlock(W / 2 - 380, 14, 760, 56, "rgba(20,24,36,0.82)");
-  ctx.fillStyle = "#ffd34d"; ctx.font = "bold 13px Trebuchet MS"; ctx.textAlign = "center";
-  ctx.fillText("THEMA: " + stage.topic.toUpperCase(), W / 2, 34);
-  ctx.fillStyle = "#fff"; ctx.font = "bold 22px Trebuchet MS";
-  ctx.fillText(stage.question, W / 2, 60);
+  roundBlock(W / 2 - 395, 10, 790, 70, "rgba(20,24,36,0.85)");
+  ctx.fillStyle = "#ffd34d"; ctx.font = "bold 12px Trebuchet MS"; ctx.textAlign = "center";
+  ctx.fillText("THEMA: " + stage.topic.toUpperCase(), W / 2, 27);
+  ctx.fillStyle = "#fff";
+  drawWrapped(stage.question, W / 2, 53, 760, 38, 21);
   ctx.textAlign = "left";
   const solved = session.total - session.queue.length;
+  const lvl = (session.mode === "topic" && session.level) ? "Level " + session.level + "   " : "";
   ctx.fillStyle = "#1d2230"; ctx.font = "bold 16px Trebuchet MS";
-  ctx.fillText(`✅ ${solved}/${session.total}   ✦ Versuche: ${session.attempts}   ${DIFF[difficulty].label}`, 14, H - 14);
+  ctx.fillText(`✅ ${solved}/${session.total}   ✦ Versuche: ${session.attempts}   ${lvl}${DIFF[difficulty].label}`, 14, H - 14);
 }
 
 /* ---------------------------------------------------------------------
@@ -746,16 +839,33 @@ function renderMap() {
   const due = dueCountTotal();
   const adaptive = makeCard("🎯", "Übungs-Mix",
     due > 0 ? due + " zu wiederholen" : "deine Schwächen", "adaptive");
-  adaptive.onclick = () => startSession("adaptive", null);
+  adaptive.onclick = () => startSession("adaptive", null, null);
   mapGrid.appendChild(adaptive);
 
   for (const topic of TOPIC_ORDER) {
     const info = TOPIC_INFO[topic];
     const st = topicStatus(topic);
     const card = makeCard(info.icon, info.name, st.label, st.cls);
-    card.onclick = () => startSession("topic", topic);
+    card.onclick = () => openLevels(topic);
     mapGrid.appendChild(card);
   }
+}
+
+// Level-Auswahl eines Themas (10 Level)
+let currentTopic = null;
+function openLevels(topic) {
+  currentTopic = topic;
+  document.getElementById("levels-title").textContent = TOPIC_INFO[topic].icon + " " + TOPIC_INFO[topic].name;
+  document.getElementById("levels-stars").textContent = "⭐ " + starCount(topic) + "/" + LEVELS_PER_TOPIC;
+  levelsGrid.innerHTML = "";
+  const done = profile.stars[topic] || {};
+  for (let k = 1; k <= LEVELS_PER_TOPIC; k++) {
+    const got = !!done[k];
+    const card = makeCard(got ? "⭐" : "▶️", "Level " + k, got ? "geschafft" : "spielen", got ? "mastered" : "");
+    card.onclick = () => startSession("topic", topic, k);
+    levelsGrid.appendChild(card);
+  }
+  showState("levels");
 }
 
 /* ---------------------------------------------------------------------
@@ -894,9 +1004,21 @@ document.querySelectorAll(".diff-btn").forEach((b) => {
 document.getElementById("menu-back").onclick = () => { selectModeUI(); showState("mode"); };
 document.getElementById("goto-map").onclick = () => { renderMap(); showState("map"); };
 document.getElementById("map-back").onclick = () => { selectDifficultyUI(); selectModeUI(); showState("menu"); };
-document.getElementById("lc-again").onclick = () => startSession(session.mode, session.topic);
-document.getElementById("lc-map").onclick = () => { renderMap(); showState("map"); };
-elBack.onclick = () => { renderMap(); showState("map"); };
+document.getElementById("levels-back").onclick = () => { renderMap(); showState("map"); };
+document.getElementById("lc-again").onclick = () => startSession(session.mode, session.topic, session.level);
+document.getElementById("lc-next").onclick = () => {
+  if (session.mode === "topic" && session.level < LEVELS_PER_TOPIC) startSession("topic", session.topic, session.level + 1);
+  else if (session.topic) openLevels(session.topic);
+  else { renderMap(); showState("map"); };
+};
+document.getElementById("lc-map").onclick = () => {
+  if (session && session.mode === "topic" && session.topic) openLevels(session.topic);
+  else { renderMap(); showState("map"); }
+};
+elBack.onclick = () => {
+  if (session && session.mode === "topic" && session.topic) openLevels(session.topic);
+  else { renderMap(); showState("map"); }
+};
 
 /* ---------------------------------------------------------------------
    Start

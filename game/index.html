@@ -131,6 +131,19 @@
       </div>
     </div>
 
+    <!-- Level-Auswahl eines Themas (10 Level) -->
+    <div id="overlay-levels" class="overlay hidden">
+      <div class="panel wide">
+        <div class="map-head">
+          <button id="levels-back" class="small-btn">↩ Karte</button>
+          <h1 id="levels-title">Thema</h1>
+          <span id="levels-stars" class="badge"></span>
+        </div>
+        <p class="small">Sammle pro Thema <b>10 Sterne</b> ⭐. Die Level werden nach hinten kniffliger.</p>
+        <div id="levels-grid" class="map-grid"></div>
+      </div>
+    </div>
+
     <!-- Level abgeschlossen -->
     <div id="overlay-levelcomplete" class="overlay hidden">
       <div class="panel">
@@ -138,7 +151,8 @@
         <p id="lc-stats"></p>
         <div class="btn-row">
           <button id="lc-again" class="big-btn yellow">↻ Nochmal</button>
-          <button id="lc-map" class="big-btn green">🗺️ Zur Karte</button>
+          <button id="lc-next" class="big-btn green">➡️ Nächstes Level</button>
+          <button id="lc-map" class="big-btn grey">🗺️ Zur Karte</button>
         </div>
       </div>
     </div>

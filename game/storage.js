@@ -39,9 +39,12 @@ const Storage = (function () {
   function defaultProfile() {
     return {
       difficulty: "medium",
+      device: null,    // pc | tablet | phone
+      gameMode: "obby",
       topics: {},      // topic -> { correct, wrong }
       due: {},         // questionId -> true (noch nicht richtig gelöst)
-      completed: {},   // topic -> true (Level einmal komplett geschafft)
+      completed: {},   // topic -> true (alle 10 Level geschafft)
+      stars: {},       // topic -> { levelNr: true } (gesammelte Sterne, 10 pro Thema)
     };
   }
 
