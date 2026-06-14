@@ -205,15 +205,27 @@ const WORTARTEN = {
   Konjunktion: ["und", "weil", "obwohl", "oder", "aber", "denn", "wenn"],
 };
 const WA_KEYS = Object.keys(WORTARTEN);
+const WA_HINT = {
+  Nomen: "Nomen benennen Lebewesen, Dinge oder Begriffe (oft mit Artikel, großgeschrieben).",
+  Verb: "Verben sind Tätigkeitswörter und beugbar (ich …, du …).",
+  Adjektiv: "Adjektive beschreiben (Wie ist etwas?) und sind steigerbar (groß–größer).",
+  Adverb: "Adverbien geben Umstände an (wann/wo/wie) und sind unveränderlich.",
+  Präposition: "Präpositionen stehen vor einem Nomen (auf, unter, mit, wegen …).",
+  Konjunktion: "Konjunktionen verbinden Wörter oder Sätze (und, weil, dass, oder …).",
+};
+function waExplain(word, cat) {
+  const art = (cat === "Präposition" || cat === "Konjunktion") ? "eine" : "ein";
+  return "„" + word + "“ ist " + art + " " + cat + ". " + WA_HINT[cat];
+}
 WA_KEYS.forEach((cat, ci) => {
   WORTARTEN[cat].forEach((word) => {
     const d1 = WA_KEYS[(ci + 1) % WA_KEYS.length];
     const d2 = WA_KEYS[(ci + 3) % WA_KEYS.length];
-    addQ("Wortarten", "Welche Wortart ist „" + word + "“?", [cat, d1, d2], 0, "mc");
+    addQ("Wortarten", "Welche Wortart ist „" + word + "“?", [cat, d1, d2], 0, "mc", waExplain(word, cat));
   });
 });
-addQ("Wortarten", "Welche Wortart ist steigerbar?", ["Adjektiv", "Nomen", "Präposition"], 0, "mc");
-addQ("Wortarten", "Welche Wortart bildet Zeitformen?", ["Verb", "Nomen", "Adjektiv"], 0, "mc");
+addQ("Wortarten", "Welche Wortart ist steigerbar?", ["Adjektiv", "Nomen", "Präposition"], 0, "mc", "Nur Adjektive sind steigerbar: groß – größer – am größten.");
+addQ("Wortarten", "Welche Wortart bildet Zeitformen?", ["Verb", "Nomen", "Adjektiv"], 0, "mc", "Nur Verben werden in Zeitformen gebeugt (Präsens, Präteritum …).");
 
 // ---------- Artikel (bestimmt / unbestimmt) im Satz ----------
 const ARTIKEL = [
@@ -482,7 +494,7 @@ function addWortartenList(list) {
     const ci = WA_KEYS.indexOf(cat);
     const d1 = WA_KEYS[(ci + 1) % WA_KEYS.length];
     const d2 = WA_KEYS[(ci + 3) % WA_KEYS.length];
-    addQ("Wortarten", "Welche Wortart ist „" + word + "“?", [cat, d1, d2], 0, "mc");
+    addQ("Wortarten", "Welche Wortart ist „" + word + "“?", [cat, d1, d2], 0, "mc", waExplain(word, cat));
   });
 }
 addWortartenList([
