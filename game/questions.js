@@ -255,23 +255,30 @@ addQ("Artikel", "Welches ist ein bestimmter Artikel?", ["der", "ein"], 0, "mc");
 addQ("Artikel", "Welches ist ein unbestimmter Artikel?", ["eine", "die"], 0, "mc");
 
 // ---------- Pronomen ----------
+const PRON_HINT = {
+  Personalpronomen: "Personalpronomen vertreten Personen/Dinge: ich, du, er, sie, uns, dir …",
+  Possessivpronomen: "Possessivpronomen zeigen Besitz: mein, dein, sein, ihr, unser …",
+  Demonstrativpronomen: "Demonstrativpronomen weisen hin: dieser, jener, derselbe …",
+  Relativpronomen: "Relativpronomen leiten einen Relativsatz ein: der, die, das, dessen …",
+};
+function pronExplain(word, type) { return "„" + word + "“ ist ein " + type + ". " + PRON_HINT[type]; }
 const PRON = [
   ["ich, du, er, wir", "Personalpronomen", ["Possessivpronomen", "Relativpronomen"]],
   ["mein, dein, sein, unser", "Possessivpronomen", ["Personalpronomen", "Demonstrativpronomen"]],
   ["dieser, jener, derselbe", "Demonstrativpronomen", ["Relativpronomen", "Personalpronomen"]],
   ["der, die, das (im Relativsatz)", "Relativpronomen", ["Possessivpronomen", "Personalpronomen"]],
 ];
-PRON.forEach(([list, correct, d]) => addQ("Pronomen", "Was sind „" + list + "“?", [correct].concat(d), 0, "mc"));
+PRON.forEach(([list, correct, d]) => addQ("Pronomen", "Was sind „" + list + "“?", [correct].concat(d), 0, "mc", PRON_HINT[correct]));
 const PRON_REC = [
   ["Sie trifft ihre Mutter.", "ihre", "Possessivpronomen", ["Personalpronomen"]],
   ["Der Mann, dessen Auto kaputt ist, wartet.", "dessen", "Relativpronomen", ["Possessivpronomen"]],
   ["Ich gebe es dir.", "dir", "Personalpronomen", ["Possessivpronomen"]],
   ["Dieses Buch gefällt mir.", "Dieses", "Demonstrativpronomen", ["Artikel"]],
-  ["Das Kind, das dort spielt, lacht.", "das (2.)", "Relativpronomen", ["Artikel"]],
+  ["Das Kind, das dort spielt, lacht.", "das (im Nebensatz)", "Relativpronomen", ["Artikel"]],
   ["Wir sehen sie morgen.", "sie", "Personalpronomen", ["Relativpronomen"]],
   ["Mein Hund ist treu.", "Mein", "Possessivpronomen", ["Personalpronomen"]],
 ];
-PRON_REC.forEach(([s, t, label, d]) => recSentence("Pronomen", s, t, d, "Welches Pronomen / welche Art ist „" + t + "“?"));
+PRON_REC.forEach(([s, word, type, d]) => recSentence("Pronomen", s, type, d, "Welche Art ist „" + word + "“?", pronExplain(word, type)));
 
 // ---------- Fälle (Kasus) im Satz erkennen ----------
 const FAELLE = [
@@ -648,12 +655,12 @@ addWortartenList([
   ["Er gibt mir das Buch.", "mir", "Personalpronomen", ["Possessivpronomen"]],
   ["Das ist unser Auto.", "unser", "Possessivpronomen", ["Personalpronomen"]],
   ["Jenes Haus ist alt.", "Jenes", "Demonstrativpronomen", ["Artikel"]],
-  ["Die Frau, die singt, ist berühmt.", "die (2.)", "Relativpronomen", ["Artikel"]],
+  ["Die Frau, die singt, ist berühmt.", "die (im Nebensatz)", "Relativpronomen", ["Artikel"]],
   ["Ich sehe dich.", "dich", "Personalpronomen", ["Possessivpronomen"]],
   ["Deine Idee ist gut.", "Deine", "Possessivpronomen", ["Demonstrativpronomen"]],
   ["Wir helfen euch.", "euch", "Personalpronomen", ["Relativpronomen"]],
-  ["Der Stift, der hier liegt, ist blau.", "der (2.)", "Relativpronomen", ["Artikel"]],
-].forEach(([s, t, l, d]) => recSentence("Pronomen", s, t, d, "Welche Art ist „" + t + "“?"));
+  ["Der Stift, der hier liegt, ist blau.", "der (im Nebensatz)", "Relativpronomen", ["Artikel"]],
+].forEach(([s, word, type, d]) => recSentence("Pronomen", s, type, d, "Welche Art ist „" + word + "“?", pronExplain(word, type)));
 
 // --- Attribute (weitere) ---
 [
@@ -870,18 +877,18 @@ addWortartenList([
   ["Er ruft uns.", "uns", "Personalpronomen", ["Possessivpronomen"]],
   ["Das ist euer Ball.", "euer", "Possessivpronomen", ["Personalpronomen"]],
   ["Diese Tasche ist neu.", "Diese", "Demonstrativpronomen", ["Artikel"]],
-  ["Der Junge, der rennt, gewinnt.", "der (2.)", "Relativpronomen", ["Artikel"]],
+  ["Der Junge, der rennt, gewinnt.", "der (im Nebensatz)", "Relativpronomen", ["Artikel"]],
   ["Ich höre dich.", "dich", "Personalpronomen", ["Possessivpronomen"]],
   ["Sein Hund bellt.", "Sein", "Possessivpronomen", ["Personalpronomen"]],
   ["Wir danken ihnen.", "ihnen", "Personalpronomen", ["Relativpronomen"]],
-  ["Das Buch, das hier liegt, ist neu.", "das (2.)", "Relativpronomen", ["Artikel"]],
+  ["Das Buch, das hier liegt, ist neu.", "das (im Nebensatz)", "Relativpronomen", ["Artikel"]],
   ["Ihre Katze schläft.", "Ihre", "Possessivpronomen", ["Demonstrativpronomen"]],
   ["Jener Mann winkt.", "Jener", "Demonstrativpronomen", ["Artikel"]],
-  ["Die Schüler, die lernen, bestehen.", "die (2.)", "Relativpronomen", ["Artikel"]],
+  ["Die Schüler, die lernen, bestehen.", "die (im Nebensatz)", "Relativpronomen", ["Artikel"]],
   ["Unser Haus ist groß.", "Unser", "Possessivpronomen", ["Personalpronomen"]],
-].forEach(([s, t, l, d]) => recSentence("Pronomen", s, l, d, "Welche Art ist „" + t + "“?"));
-addQ("Pronomen", "„uns, euch, ihnen“ sind …", ["Personalpronomen", "Possessivpronomen"], 0, "mc");
-addQ("Pronomen", "„unser, euer, ihr“ sind …", ["Possessivpronomen", "Personalpronomen"], 0, "mc");
+].forEach(([s, word, type, d]) => recSentence("Pronomen", s, type, d, "Welche Art ist „" + word + "“?", pronExplain(word, type)));
+addQ("Pronomen", "„uns, euch, ihnen“ sind …", ["Personalpronomen", "Possessivpronomen"], 0, "mc", PRON_HINT.Personalpronomen);
+addQ("Pronomen", "„unser, euer, ihr“ sind …", ["Possessivpronomen", "Personalpronomen"], 0, "mc", PRON_HINT.Possessivpronomen);
 
 // --- Fälle (35 weitere, echte Sätze) ---
 [
