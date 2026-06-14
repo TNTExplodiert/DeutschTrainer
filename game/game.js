@@ -67,7 +67,8 @@ let dash = null;
 const DASH = {
   CX: 170, GROUND_Y: 430, BAR_Y: 300, BAR_H: 16, CUBE: 34,
   GRAV: 0.9, JUMP: -16.5,
-  SEG_LEN: 680, BAR_START: 300, BAR_END: 600, JUDGE: 560, FINISH_PAD: 360,
+  // lange Anlaufstrecke (BAR_START) -> genug Zeit, die Frage zu lesen, bevor man springt
+  SEG_LEN: 1080, BAR_START: 680, BAR_END: 980, JUDGE: 940, FINISH_PAD: 360,
 };
 const DASH_SPEED = { easy: 4.2, medium: 5.4, hard: 6.8 };
 
