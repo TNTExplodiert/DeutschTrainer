@@ -1,5 +1,11 @@
 # DeutschTrainer 🇩🇪
 
+## ▶️ [**Jetzt spielen: tntexplodiert.github.io/DeutschTrainer/game/**](https://tntexplodiert.github.io/DeutschTrainer/game/)
+
+> Direkt im Browser spielbar (Handy, Tablet, PC) – am besten im **Querformat**.
+
+---
+
 Lern- und Spielprojekt für **Deutsch in der 7. Jahrgangsstufe, Realschule Bayern**
 (orientiert am *LehrplanPLUS*).
 
