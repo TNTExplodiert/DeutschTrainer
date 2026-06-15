@@ -88,7 +88,7 @@ def main():
         f.write("\n".join(en + " = " + de for en, de in pairs) + "\n")
 
     print(f"{len(pairs)} Vokabeln -> {OUT}")
-    print(f"Einfügefertig (für 📚) -> {txt}")
+    print(f"Einfuegefertige Liste (fuer den Vokabel-Import) -> {txt}")
 
 
 if __name__ == "__main__":
