@@ -25,6 +25,7 @@
     <button id="btn-back" class="hidden">↩ Karte</button>
     <button id="btn-mute">🔊</button>
     <button id="btn-lang">🇩🇪 DE</button>
+    <button id="btn-vocab" title="Eigene Vokabeln (lokal)">📚</button>
 
     <!-- ============ Overlays ============ -->
 
@@ -195,6 +196,26 @@
         </div>
       </div>
     </div>
+
+    <!-- Eigene Vokabeln (lokal/privat, localStorage) -->
+    <div id="overlay-vocab" class="overlay hidden">
+      <div class="panel wide">
+        <h1>📚 Meine Vokabeln</h1>
+        <p class="small">
+          Eine Vokabel pro Zeile, z. B. <code>homesick = Heimweh haben</code>.
+          Trennzeichen: <code>=</code>, Tab, <code>-</code> oder <code>;</code>.
+          Bleibt <b>nur lokal in diesem Browser</b> – nichts wird hochgeladen.
+          Danach im Modus <b>🇬🇧 EN → „Mein Wortschatz"</b> üben.
+        </p>
+        <textarea id="vocab-text" rows="10" style="width:100%;box-sizing:border-box;font-size:15px"></textarea>
+        <p class="small" id="vocab-status"></p>
+        <div class="btn-row">
+          <button id="vocab-save" class="big-btn green">💾 Speichern &amp; laden</button>
+          <button id="vocab-clear" class="big-btn grey">🗑️ Löschen</button>
+          <button id="vocab-close" class="big-btn yellow">Schließen</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Hinweis im Hochformat (Spiel ist fürs Querformat gemacht) -->
@@ -205,6 +226,7 @@
 
   <script src="i18n.js"></script>
   <script src="vocab_custom.js"></script><!-- optional, lokal/gitignored: window.CUSTOM_VOCAB -->
+  <script src="vocab_store.js"></script><!-- persistiert eigene Vokabeln lokal (localStorage) -->
   <script src="questions.js"></script>
   <script src="questions_en.js"></script>
   <script src="storage.js"></script>

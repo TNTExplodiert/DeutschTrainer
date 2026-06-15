@@ -34,3 +34,19 @@ fremder Inhalte.
    allen deinen Vokabeln.
 
 > Format-Vorlage: [`game/vocab_custom.sample.js`](../../game/vocab_custom.sample.js)
+
+## Variante 2: direkt im Spiel (ohne Datei, auch online)
+
+Auf der gehosteten Seite gibt es keine lokale Datei – dort (oder generell) kannst du
+die Vokabeln **direkt im Browser** eingeben:
+
+1. Oben rechts auf **📚** klicken.
+2. Vokabeln einfügen (gleiches Format wie oben), **💾 Speichern & laden**.
+3. Sie werden **lokal im Browser** (`localStorage`) gespeichert und bei jedem Besuch
+   automatisch wieder geladen – kein erneutes Importieren nötig.
+
+Speicherung erfolgt nur bei erteilter Cookie-/Speicher-Zustimmung. Die Daten bleiben
+ausschließlich auf deinem Gerät (kein Upload, kein Commit). Mit **🗑️ Löschen** entfernst
+du sie wieder.
+
+> Hinweis: `localStorage` statt Cookie, weil Cookies (~4 KB) für hunderte Vokabeln zu klein sind.

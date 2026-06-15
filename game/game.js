@@ -16,6 +16,7 @@ const elTouch = document.getElementById("touch-controls");
 const elBack = document.getElementById("btn-back");
 const elMute = document.getElementById("btn-mute");
 const elLang = document.getElementById("btn-lang");
+const elVocab = document.getElementById("btn-vocab");
 const overlays = {
   consent: document.getElementById("overlay-consent"),
   device: document.getElementById("overlay-device"),
@@ -110,6 +111,7 @@ function showState(name) {
   elTouch.classList.toggle("hidden", !(deviceClass !== "pc" && name === "playing"));
   elBack.classList.toggle("hidden", name !== "playing");
   if (elLang) elLang.classList.toggle("hidden", name === "playing");  // Sprachwechsel nicht im Spiel
+  if (elVocab) elVocab.classList.toggle("hidden", name === "playing");
   if (window.GameAudio && name !== "playing") window.GameAudio.stop();
   if (name === "mode" && typeof resetModeView === "function") resetModeView();
 }
@@ -1510,6 +1512,30 @@ if (elLang) elLang.onclick = () => {
   updateLangBtn();
   renderMap(); showState("map");
 };
+// ---- „Meine Vokabeln" (lokal/privat, localStorage via vocab_store.js) ----
+function openVocab() {
+  const ovl = document.getElementById("overlay-vocab");
+  if (!ovl || !window.VocabStore) return;
+  document.getElementById("vocab-text").value = VocabStore.asText();
+  document.getElementById("vocab-status").textContent = VocabStore.hasConsent()
+    ? (VocabStore.count() + " Vokabeln gespeichert.")
+    : "ⓘ Ohne Cookie-Zustimmung wird nur für diese Sitzung geladen.";
+  ovl.classList.remove("hidden");
+}
+if (elVocab) elVocab.onclick = openVocab;
+{
+  const cls = (id) => { const e = document.getElementById(id); if (e) e.classList.add("hidden"); };
+  const save = document.getElementById("vocab-save");
+  const clr = document.getElementById("vocab-clear");
+  const close = document.getElementById("vocab-close");
+  if (save) save.onclick = () => {
+    const res = VocabStore.saveText(document.getElementById("vocab-text").value);
+    if (!res.count) { document.getElementById("vocab-status").textContent = "Keine Vokabeln erkannt – Format prüfen (z. B. „word = Wort“)."; return; }
+    location.reload();   // Neu laden → „Mein Wortschatz" mit allen Vokabeln neu aufbauen
+  };
+  if (clr) clr.onclick = () => { VocabStore.clear(); location.reload(); };
+  if (close) close.onclick = () => cls("overlay-vocab");
+}
 document.getElementById("map-stats").onclick = () => renderStats();
 document.getElementById("stats-back").onclick = () => { renderMap(); showState("map"); };
 document.getElementById("stats-practice").onclick = () => startSession("adaptive", null, null);
