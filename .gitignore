@@ -1,0 +1,8 @@
+# Lokale, lizenzpflichtige Eingabe-Songs (nur zur Analyse, NICHT versionieren!)
+music_in/
+
+# Musik-Tooling: virtuelle Umgebung & generierte Audio-Dateien
+tools/music/venv/
+tools/music/*.wav
+*.pyc
+__pycache__/
