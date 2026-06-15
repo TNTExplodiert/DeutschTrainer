@@ -72,6 +72,30 @@
       </div>
     </div>
 
+    <!-- Fach wählen (erster Schritt, vor dem Spielmodus) -->
+    <div id="overlay-subject" class="overlay hidden">
+      <div class="panel">
+        <div class="map-head">
+          <button id="subject-back" class="small-btn">↩ Gerät</button>
+          <h1>📚 Fach</h1>
+          <span class="badge"></span>
+        </div>
+        <p>Welches Fach möchtest du üben?</p>
+        <div class="mode-row">
+          <button class="mode-btn subject-btn" data-subject="de">
+            <span class="mode-ic">🇩🇪</span>
+            <span class="mode-name">Deutsch</span>
+            <span class="mode-desc">7. Klasse – Rechtschreibung &amp; Grammatik</span>
+          </button>
+          <button class="mode-btn subject-btn" data-subject="en">
+            <span class="mode-ic">🇬🇧</span>
+            <span class="mode-name">Englisch</span>
+            <span class="mode-desc">7. Klasse – Grammar, Vocabulary, Ireland …</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Spielmodus wählen -->
     <div id="overlay-mode" class="overlay hidden">
       <div class="panel">
@@ -144,7 +168,6 @@
           <button id="map-back" class="small-btn">↩ Menü</button>
           <h1>🗺️ Levelkarte</h1>
           <button id="map-stats" class="small-btn">📊 Profil</button>
-          <button id="btn-lang" class="small-btn">🇩🇪 DE</button>
           <button id="btn-vocab" class="small-btn">📚 Vokabeln</button>
           <span id="map-diff" class="badge"></span>
         </div>

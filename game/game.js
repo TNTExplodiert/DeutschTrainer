@@ -20,6 +20,7 @@ const elVocab = document.getElementById("btn-vocab");
 const overlays = {
   consent: document.getElementById("overlay-consent"),
   device: document.getElementById("overlay-device"),
+  subject: document.getElementById("overlay-subject"),
   mode: document.getElementById("overlay-mode"),
   menu: document.getElementById("overlay-menu"),
   map: document.getElementById("overlay-map"),
@@ -1234,7 +1235,8 @@ function makeCard(icon, name, status, cls) {
 }
 function renderMap() {
   mapGrid.innerHTML = "";
-  mapDiff.textContent = (gameMode === "dash" ? "🔺 Cube Dash" : gameMode === "wave" ? "🌊 Wave" : "🧗 Obby") + " · " + DIFF[difficulty].label;
+  mapDiff.textContent = (lang === "en" ? "🇬🇧 Englisch" : "🇩🇪 Deutsch") + " · " +
+    (gameMode === "dash" ? "🔺 Cube Dash" : gameMode === "wave" ? "🌊 Wave" : "🧗 Obby") + " · " + DIFF[difficulty].label;
 
   const due = dueCountTotal();
   const adaptive = makeCard("🎯", "Übungs-Mix",
@@ -1440,7 +1442,7 @@ function syncFromProfile() {
   gameMode = profile.gameMode || "obby";
   deviceClass = profile.device || detectDevice();
   applyDevice();
-  selectDifficultyUI(); selectModeUI(); updateConsentStatus();
+  selectDifficultyUI(); selectModeUI(); selectSubjectUI(); updateConsentStatus();
   if (window.GameAudio) window.GameAudio.setMuted(!!profile.muted);
   updateMuteBtn();
 }
@@ -1462,10 +1464,25 @@ document.querySelectorAll(".dev-btn").forEach((b) => {
     profile.device = deviceClass;
     Storage.saveProfile(profile);
     applyDevice();
+    showState("subject");
+  };
+});
+// ---- Fach (Sprachpaket) wählen – erster Schritt vor dem Spielmodus ----
+function selectSubjectUI() {
+  document.querySelectorAll(".subject-btn").forEach((b) =>
+    b.classList.toggle("selected", b.dataset.subject === lang));
+}
+document.querySelectorAll(".subject-btn").forEach((b) => {
+  b.onclick = () => {
+    setLanguage(b.dataset.subject);
+    profile.lang = lang;
+    Storage.saveProfile(profile);
+    selectSubjectUI();
     showState("mode");
   };
 });
-document.getElementById("mode-back").onclick = () => showState("device");
+document.getElementById("subject-back").onclick = () => showState("device");
+document.getElementById("mode-back").onclick = () => showState("subject");
 document.querySelectorAll(".mode-btn[data-mode]").forEach((b) => {
   b.onclick = () => {
     gameMode = b.dataset.mode;
