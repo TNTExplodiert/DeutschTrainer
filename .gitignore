@@ -1,6 +1,12 @@
 # Lokale, lizenzpflichtige Eingabe-Songs (nur zur Analyse, NICHT versionieren!)
 music_in/
 
+# Persönliche Lernnotizen aus lizenzpflichtigen Büchern (OCR o. Ä.) – NICHT veröffentlichen!
+docs/english_stoff.md
+# Lokale, private Vokabel-/Inhaltslisten (eigene Mitschrift) – bleiben auf dem Gerät
+game/vocab_custom.js
+tools/vocab/*.txt
+
 # Musik-Tooling: virtuelle Umgebung & generierte Audio-Dateien
 tools/music/venv/
 tools/music/*.wav

@@ -40,6 +40,7 @@ const Storage = (function () {
     return {
       difficulty: "medium",
       device: null,    // pc | tablet | phone
+      lang: "de",      // de | en (Sprach-Paket)
       gameMode: "obby",
       muted: false,
       topics: {},      // topic -> { correct, wrong }

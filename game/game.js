@@ -15,6 +15,7 @@ const elApp = document.getElementById("app");
 const elTouch = document.getElementById("touch-controls");
 const elBack = document.getElementById("btn-back");
 const elMute = document.getElementById("btn-mute");
+const elLang = document.getElementById("btn-lang");
 const overlays = {
   consent: document.getElementById("overlay-consent"),
   device: document.getElementById("overlay-device"),
@@ -46,9 +47,20 @@ const FRICTION = 0.75;
 const LAVA_Y = 470;
 const PLATFORM_Y = 360;
 
-// ---- Frage-Index für schnelle Suche ----
-const QUESTION_BY_ID = {};
-QUESTIONS.forEach((q) => { QUESTION_BY_ID[q.id] = q; });
+// ---- Sprach-Pakete (DE/EN) + Frage-Index ----
+let lang = "de";
+let QUESTIONS = [], TOPIC_INFO = {}, TOPIC_ORDER = [];
+let QUESTION_BY_ID = {};
+function setLanguage(code) {
+  const pack = (window.LANG_PACKS || {})[code];
+  if (!pack) return;
+  lang = code;
+  QUESTIONS = pack.QUESTIONS;
+  TOPIC_INFO = pack.TOPIC_INFO;
+  TOPIC_ORDER = pack.TOPIC_ORDER;
+  QUESTION_BY_ID = {};
+  QUESTIONS.forEach((q) => { QUESTION_BY_ID[q.id] = q; });
+}
 function questionsByTopic(t) { return QUESTIONS.filter((q) => q.topic === t); }
 
 // ---- App-Zustand ----
@@ -97,6 +109,7 @@ function showState(name) {
   // Touch-Steuerung nur im Spiel und nicht am PC
   elTouch.classList.toggle("hidden", !(deviceClass !== "pc" && name === "playing"));
   elBack.classList.toggle("hidden", name !== "playing");
+  if (elLang) elLang.classList.toggle("hidden", name === "playing");  // Sprachwechsel nicht im Spiel
   if (window.GameAudio && name !== "playing") window.GameAudio.stop();
   if (name === "mode" && typeof resetModeView === "function") resetModeView();
 }
@@ -1419,6 +1432,8 @@ window.addEventListener("mouseup", () => { keys.jump = false; });
    DOM-Buttons verdrahten
    ------------------------------------------------------------------- */
 function syncFromProfile() {
+  setLanguage(profile.lang || "de");
+  updateLangBtn();
   difficulty = profile.difficulty || "medium";
   gameMode = profile.gameMode || "obby";
   deviceClass = profile.device || detectDevice();
@@ -1487,6 +1502,14 @@ elMute.onclick = () => {
   if (window.GameAudio) window.GameAudio.setMuted(profile.muted);
   updateMuteBtn();
 };
+function updateLangBtn() { if (elLang) elLang.textContent = lang === "en" ? "🇬🇧 EN" : "🇩🇪 DE"; }
+if (elLang) elLang.onclick = () => {
+  setLanguage(lang === "de" ? "en" : "de");
+  profile.lang = lang;
+  Storage.saveProfile(profile);
+  updateLangBtn();
+  renderMap(); showState("map");
+};
 document.getElementById("map-stats").onclick = () => renderStats();
 document.getElementById("stats-back").onclick = () => { renderMap(); showState("map"); };
 document.getElementById("stats-practice").onclick = () => startSession("adaptive", null, null);
@@ -1524,6 +1547,8 @@ function init() {
     showState("device");
   } else {
     profile = Storage.defaultProfile();
+    setLanguage(profile.lang || "de");
+    updateLangBtn();
     deviceClass = detectDevice();
     applyDevice();
     updateMuteBtn();

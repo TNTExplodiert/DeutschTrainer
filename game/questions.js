@@ -9,6 +9,7 @@
             "transform" Satz umformen/verbinden (lange Antworten)
    ===================================================================== */
 
+(function () {  // ---- DE-Sprachpaket (kapselt alle Helfer/Daten, registriert sich am Ende) ----
 const QUESTIONS = [];
 function addQ(topic, q, options, correct, kind, explain) {
   QUESTIONS.push({ topic, q, options, correct, kind: kind || "mc", explain: explain || "" });
@@ -1191,3 +1192,6 @@ const TOPIC_INFO = {
   "Konjunktiv":        { name: "Indirekte Rede",    icon: "💬", cat: "Grammatik" },
 };
 const TOPIC_ORDER = Object.keys(TOPIC_INFO);
+
+registerLangPack("de", { QUESTIONS: QUESTIONS, TOPIC_INFO: TOPIC_INFO, TOPIC_ORDER: TOPIC_ORDER });
+})();
