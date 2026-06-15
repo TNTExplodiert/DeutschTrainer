@@ -16,7 +16,7 @@ const GameAudio = (function () {
   // Optionale echte Nine-Circles-Datei: ablegen unter game/assets/nine.mp3
   // (vom Nutzer hinzuzufügen). Start bei 2:23. Sonst spielt der Synth-Fallback.
   const NINE_URL = "assets/nine.mp3";
-  const NINE_START = 143;
+  const NINE_START = 0;   // Song von Anfang an
   let nineEl = null, realNine = false;
   function ensureNineEl() {
     if (nineEl !== null) return;

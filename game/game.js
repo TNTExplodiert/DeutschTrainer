@@ -75,7 +75,7 @@ const DASH_SPEED = { easy: 4.2, medium: 5.4, hard: 6.8 };
 
 // ---- Wave (Geometry-Dash-Wave-Modus) ----
 let wave = null;
-const WAVE = { CX: 170, TOP: 74, BOT: 516, SZ: 20, APPROACH: 1500, TUNNEL: 900, PAD: 360, WALL: 34 };
+const WAVE = { CX: 170, TOP: 74, BOT: 516, SZ: 20, APPROACH: 1500, TUNNEL: 900, PAD: 360, WALL: 34, SPIKE: 110 };
 const WAVE_SPEED = { easy: 3.6, medium: 4.6, hard: 5.8 };
 const WAVE_SEC = WAVE.APPROACH + WAVE.TUNNEL;
 
@@ -630,12 +630,10 @@ function updateWave() {
     waveDie(); return;
   }
 
-  // Nine: Sägeblatt-Hindernisse im Anflug (Crash bei Berührung)
+  // Nine: Hindernisse im Anflug (Crash bei Berührung)
   if (wave.nine) {
     for (const o of waveObstacles(sec)) {
-      const dx = wave.worldX - o.x, dy = (s.y + WAVE.SZ / 2) - o.y;
-      const rr = o.r * 0.78 + WAVE.SZ * 0.3;
-      if (dx * dx + dy * dy < rr * rr) { wave.lastExplain = ""; waveDie(); return; }
+      if (hitObstacle(o, wave.worldX, s.y)) { wave.lastExplain = ""; waveDie(); return; }
     }
   }
 
@@ -695,17 +693,10 @@ function waveFinish() {
 /* ---- Wave zeichnen ---- */
 function drawWave() {
   if (wave.nine) {
-    // Nine-Circles-Look: dunkel + pulsierende Neon-Ringe
-    ctx.fillStyle = "#070010"; ctx.fillRect(0, 0, W, H);
-    const cx = W / 2, cy = (WAVE.TOP + WAVE.BOT) / 2;
-    const pulse = (animTime * 0.06) % 70;
-    for (let i = 6; i >= 0; i--) {
-      const r = i * 70 + pulse;
-      const hue = (animTime * 2 + i * 40) % 360;
-      ctx.strokeStyle = "hsla(" + hue + ",100%,60%,0.30)";
-      ctx.lineWidth = 4;
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke();
-    }
+    // Nine-Circles-Look: einfach rot
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#5a0010"); g.addColorStop(1, "#2a0008");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   } else {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "#1a0b3a"); g.addColorStop(1, "#2d0b5a");
@@ -713,9 +704,9 @@ function drawWave() {
   }
 
   // Decke / Boden
-  ctx.fillStyle = wave.nine ? "#1a0026" : "#0c0720";
+  ctx.fillStyle = wave.nine ? "#1a0006" : "#0c0720";
   ctx.fillRect(0, 0, W, WAVE.TOP); ctx.fillRect(0, WAVE.BOT, W, H - WAVE.BOT);
-  ctx.fillStyle = wave.nine ? "#ff2bd0" : "#19e0ff";
+  ctx.fillStyle = wave.nine ? "#ffffff" : "#19e0ff";
   ctx.fillRect(0, WAVE.TOP - 3, W, 3); ctx.fillRect(0, WAVE.BOT, W, 3);
 
   const sec0 = Math.floor(wave.worldX / wave.sec);
@@ -745,7 +736,7 @@ function drawWaveSection(sec) {
   const sx1 = WAVE.CX + (tunnelEnd - wave.worldX);
 
   // Trennwände
-  ctx.fillStyle = wave.nine ? "#ff2bd0" : "#19e0ff";
+  ctx.fillStyle = wave.nine ? "#ffffff" : "#19e0ff";
   for (let k = 1; k < lay.n; k++) {
     const yk = WAVE.TOP + k * laneH;
     const a = Math.max(0, sx0), b = Math.min(W, sx1);
@@ -757,7 +748,7 @@ function drawWaveSection(sec) {
   for (let band = 0; band < lay.n; band++) {
     if (band === lay.correctBand) continue;
     if (wfx1 > 0 && wfx0 < W) {
-      ctx.fillStyle = "#ff3b6b";
+      ctx.fillStyle = wave.nine ? "#000000" : "#ff3b6b";
       ctx.fillRect(wfx0, WAVE.TOP + band * laneH + 4, Math.max(6, wfx1 - wfx0), laneH - 8);
     }
   }
@@ -779,11 +770,11 @@ function drawWaveSection(sec) {
     }
   }
 
-  // Nine: Sägeblätter zeichnen
+  // Nine: Hindernisse zeichnen
   if (wave.nine) {
     for (const o of waveObstacles(sec)) {
       const osx = WAVE.CX + (o.x - wave.worldX);
-      if (osx > -50 && osx < W + 50) drawSawblade(osx, o.y, o.r);
+      if (osx > -60 && osx < W + 60) drawObstacle(o, osx);
     }
   }
 }
@@ -801,18 +792,28 @@ function drawWaveTrail() {
   ctx.strokeStyle = "#ffe14d"; ctx.lineWidth = 2.5; ctx.stroke();
 }
 
-// Feste (lernbare) Sägeblatt-Hindernisse im Anflug – nur im NINE-Level
+// Feste (lernbare) Hindernisse im Anflug – nur im NINE-Level.
+// Typen: saw (Sägeblatt), diamond (Block-Raute), spikeUp (Boden), spikeDown (Decke).
 function waveObstacles(sec) {
   if (!wave || !wave.nine || sec < 0 || sec >= wave.layouts.length) return [];
-  const base = sec * wave.sec;
-  const top = WAVE.TOP, h = WAVE.BOT - WAVE.TOP;
-  const out = [];
-  const xs = [700, 1250, 1800];   // im Anflug; letzte ~600px bleiben frei zum Positionieren
-  for (let i = 0; i < xs.length; i++) {
-    const hi = ((sec + i) % 2 === 0);
-    out.push({ x: base + xs[i], y: top + (hi ? 0.30 : 0.70) * h, r: 26 });
-  }
-  return out;
+  const base = sec * wave.sec, top = WAVE.TOP, h = WAVE.BOT - WAVE.TOP;
+  const dir = (sec % 2 === 0) ? 1 : -1;   // abwechselnd Abstieg/Aufstieg
+  const yA = top + (dir > 0 ? 0.78 : 0.22) * h;   // frühe Punkt-Hindernisse nahe einer Kante
+  const yB = top + (dir > 0 ? 0.22 : 0.78) * h;
+  return [
+    { x: base + 600, type: "saw", y: yA, r: 26 },
+    { x: base + 1050, type: dir > 0 ? "spikeUp" : "spikeDown" },
+    { x: base + 1500, type: "diamond", y: yB },
+    { x: base + 1950, type: dir > 0 ? "spikeDown" : "spikeUp" },
+  ];
+}
+function hitObstacle(o, wx, shipTop) {
+  const dx = wx - o.x, cy = shipTop + WAVE.SZ / 2;
+  if (o.type === "saw") { const dy = cy - o.y, rr = o.r * 0.78 + WAVE.SZ * 0.3; return dx * dx + dy * dy < rr * rr; }
+  if (o.type === "diamond") return Math.abs(dx) < 22 && Math.abs(cy - o.y) < 22;
+  if (o.type === "spikeUp") return Math.abs(dx) < 22 && (shipTop + WAVE.SZ) > (WAVE.BOT - WAVE.SPIKE);
+  if (o.type === "spikeDown") return Math.abs(dx) < 22 && shipTop < (WAVE.TOP + WAVE.SPIKE);
+  return false;
 }
 function drawSawblade(cx, cy, r) {
   ctx.save();
@@ -830,6 +831,22 @@ function drawSawblade(cx, cy, r) {
   ctx.restore();
   ctx.fillStyle = "#1a0a00"; ctx.beginPath(); ctx.arc(cx, cy, r * 0.5, 0, 7); ctx.fill();
   ctx.strokeStyle = "#ff7b00"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, r * 0.22, 0, 7); ctx.stroke();
+}
+function drawObstacle(o, sx) {
+  if (o.type === "saw") { drawSawblade(sx, o.y, o.r); return; }
+  ctx.fillStyle = "#ff7b00"; ctx.strokeStyle = "#1a0a00"; ctx.lineWidth = 3;
+  if (o.type === "diamond") {
+    ctx.save(); ctx.translate(sx, o.y); ctx.rotate(Math.PI / 4);
+    ctx.fillRect(-20, -20, 40, 40); ctx.strokeRect(-20, -20, 40, 40);
+    ctx.fillStyle = "#1a0a00"; ctx.fillRect(-10, -10, 20, 20);
+    ctx.restore();
+  } else if (o.type === "spikeUp" || o.type === "spikeDown") {
+    const baseY = o.type === "spikeUp" ? WAVE.BOT : WAVE.TOP;
+    const apexY = o.type === "spikeUp" ? WAVE.BOT - WAVE.SPIKE : WAVE.TOP + WAVE.SPIKE;
+    ctx.beginPath();
+    ctx.moveTo(sx - 24, baseY); ctx.lineTo(sx + 24, baseY); ctx.lineTo(sx, apexY);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
 }
 
 function drawShip() {
