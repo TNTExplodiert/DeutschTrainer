@@ -81,7 +81,14 @@ def main():
           "window.CUSTOM_VOCAB = [\n  " + body + "\n];\n")
     with open(OUT, "w", encoding="utf-8") as f:
         f.write(js)
+
+    # Zusätzlich eine einfügefertige Textliste (für 📚-Import auf GitHub Pages).
+    txt = os.path.normpath(os.path.join(HERE, "my_vocab.txt"))
+    with open(txt, "w", encoding="utf-8") as f:
+        f.write("\n".join(en + " = " + de for en, de in pairs) + "\n")
+
     print(f"{len(pairs)} Vokabeln -> {OUT}")
+    print(f"Einfügefertig (für 📚) -> {txt}")
 
 
 if __name__ == "__main__":
