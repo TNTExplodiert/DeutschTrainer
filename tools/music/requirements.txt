@@ -1,0 +1,12 @@
+# Analyse
+librosa>=0.10
+numpy
+soundfile
+
+# Generierung – MusicGen (Meta/AudioCraft).
+# torch separat passend zur CUDA-Version installieren (siehe README).
+audiocraft
+
+# Alternative Generatoren (optional):
+# stable-audio-tools     # Stable Audio Open
+# diffusers              # AudioLDM 2 u. a.
