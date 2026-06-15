@@ -31,6 +31,7 @@ const Storage = (function () {
     // Ablehnung merken, damit das Banner nicht jedes Mal kommt; nichts weiter speichern
     setCookie(CONSENT_KEY, "no", ONE_YEAR);
     deleteCookie(PROFILE_KEY);
+    try { localStorage.removeItem(PROFILE_KEY); } catch (e) { /* ignorieren */ }
   }
   function consentAnswered() {
     return getCookie(CONSENT_KEY) !== null;
@@ -53,7 +54,17 @@ const Storage = (function () {
 
   function loadProfile() {
     if (hasConsent()) {
-      const raw = getCookie(PROFILE_KEY);
+      let raw = null;
+      try { raw = localStorage.getItem(PROFILE_KEY); } catch (e) { /* ignorieren */ }
+      // Migration: alter Cookie-Stand (≤4 KB) -> localStorage übernehmen
+      if (!raw) {
+        const old = getCookie(PROFILE_KEY);
+        if (old) {
+          raw = old;
+          try { localStorage.setItem(PROFILE_KEY, old); } catch (e) {}
+          deleteCookie(PROFILE_KEY);
+        }
+      }
       if (raw) {
         try {
           const p = JSON.parse(raw);
@@ -64,10 +75,12 @@ const Storage = (function () {
     return defaultProfile();
   }
 
+  // Profil in localStorage (MB statt ~4 KB beim Cookie) -> Fortschritt für DE+EN
+  // passt sicher rein und geht beim Neuladen nicht mehr verloren.
   function saveProfile(profile) {
     if (!hasConsent()) return; // ohne Zustimmung wird nichts gespeichert
     try {
-      setCookie(PROFILE_KEY, JSON.stringify(profile), ONE_YEAR);
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
     } catch (e) { /* ignorieren */ }
   }
 
