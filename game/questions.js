@@ -1122,6 +1122,48 @@ addQ("Konjunktiv", "Konjunktiv I von „werden“ (er) ist …", ["werde", "wird
 addQ("Konjunktiv", "Die Anführungszeichen „…“ stehen bei der …", ["direkten Rede", "indirekten Rede"], 0, "mc");
 
 /* =====================================================================
+   Erklärungen vervollständigen (jede Frage bekommt eine Erklärung)
+   ===================================================================== */
+const LABEL_EXPLAIN = {
+  "Subjekt": "Subjekt = Wer oder was? – führt die Handlung aus.",
+  "Prädikat": "Prädikat = die gebeugte Verbform (Was tut/geschieht?).",
+  "Akkusativobjekt": "Akkusativobjekt erfragt man mit „Wen oder was?“.",
+  "Dativobjekt": "Dativobjekt erfragt man mit „Wem?“.",
+  "Präpositionalobjekt": "Präpositionalobjekt = Verb mit fester Präposition (warten auf …).",
+  "vorangestelltes Attribut": "Beifügung VOR dem Nomen (meist ein Adjektiv).",
+  "nachgestelltes Attribut": "Beifügung NACH dem Nomen (oft Genitiv: des …).",
+  "Präpositionalattribut": "Attribut mit Präposition (die Frau mit dem Hut).",
+  "Attributsatz": "Nebensatz, der ein Nomen näher bestimmt (Relativsatz).",
+  "Aktiv": "Aktiv: Der Täter handelt (jemand macht etwas).",
+  "Passiv": "Passiv: werden + Partizip II; der Täter ist oft unwichtig.",
+};
+const TOPIC_EXPLAIN = {
+  "das/dass": "„das“ = Artikel/Pronomen (durch dieses/welches ersetzbar); „dass“ = Konjunktion.",
+  "Großschreibung": "Groß: Satzanfang, Nomen, Eigennamen (auch zugehörige Adjektive), Anrede „Sie/Ihnen“. Klein: unbestimmte Mengen (viele, wenige, zwei).",
+  "Nominalisierung": "Nominalisierte Verben/Adjektive großschreiben – Signalwort wie Artikel oder „beim/zum/das“ davor.",
+  "s-Laute": "Nach langem Vokal/Doppellaut „ß“ (Straße, Fuß), nach kurzem betontem Vokal „ss“ (Fluss, muss).",
+  "Getrennt/Zusammen": "Getrennt, wenn beide Wörter ihre eigene Bedeutung behalten; zusammen, wenn ein neues Wort mit eigener Bedeutung entsteht.",
+  "Komma": "Nebensätze und Relativsätze werden mit Komma abgetrennt; bei einer Aufzählung steht vor „und“ kein Komma.",
+  "Wortarten": "Wortart bestimmen: Nomen, Verb, Adjektiv, Adverb, Präposition, Konjunktion, Pronomen, Artikel.",
+  "Artikel": "der/die/das = bestimmter Artikel; ein/eine/einen … = unbestimmter Artikel.",
+  "Pronomen": "Pronomen ersetzen oder begleiten ein Nomen (Personal-, Possessiv-, Demonstrativ-, Relativpronomen).",
+  "Fälle": "Nominativ = Wer/Was? · Akkusativ = Wen/Was? · Dativ = Wem? · Genitiv = Wessen?",
+  "Satzglieder": "Satzglied mit der Umstellprobe und den Fragen bestimmen (Wer? Wen? Wem? Wessen?).",
+  "Adverbiale": "temporal = Wann? · lokal = Wo/Wohin? · modal = Wie? · kausal = Warum?",
+  "Attribute": "Attribut = Beifügung am Nomen (Frage: Welche(r/s)?).",
+  "Zeitformen": "Perfekt: habe/bin + Partizip · Plusquamperfekt: hatte/war + Partizip · Futur I: werden + Infinitiv.",
+  "Aktiv/Passiv": "Aktiv: der Täter handelt. Passiv: werden + Partizip II.",
+  "Satzarten": "Satzreihe = zwei Hauptsätze; Satzgefüge = Hauptsatz + Nebensatz (Verb am Ende).",
+  "Umstellung": "Zwei Hauptsätze → Haupt- + Nebensatz: Konjunktion (weil/als/wenn …), Verb im Nebensatz am Ende.",
+  "Konjunktiv": "Indirekte Rede → Konjunktiv I (er sei, er habe, er gehe …).",
+};
+QUESTIONS.forEach((q) => {
+  if (q.explain && q.explain.trim()) return;
+  const c = q.options[q.correct];
+  q.explain = LABEL_EXPLAIN[c] || TOPIC_EXPLAIN[q.topic] || "";
+});
+
+/* =====================================================================
    IDs, Themen-Infos
    ===================================================================== */
 QUESTIONS.forEach((q) => { q.id = q.topic + "::" + q.q + "::" + q.options.join("|"); });
